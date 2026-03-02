@@ -4,10 +4,12 @@ import org.springframework.http.ResponseEntity;
 import vn.com.anhemsoftware.license_app.entity.User;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignInRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignUpRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.request.VerifyOtpRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.response.SignUpResponse;
 
 public interface AuthService
 {
-    ResponseEntity<SignUpResponse> signUp(SignUpRequest request) throws Exception;
-    ResponseEntity<User> signIn(SignInRequest request) throws Exception;
+    void signUp(SignUpRequest request) throws Exception;
+    ResponseEntity<SignUpResponse> confirmOtp(VerifyOtpRequest request) throws Exception;
+    ResponseEntity<SignUpResponse> signIn(SignInRequest request) throws Exception;
 }

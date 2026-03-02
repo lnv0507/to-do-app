@@ -4,6 +4,9 @@ build/
 
 ### File biên dịch của Java ###
 *.class
+# properties dev
+src/main/resources/application-dev.properties
+
 
 ### IDE cụ thể  ###
 .idea/

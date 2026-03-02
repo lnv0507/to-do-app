@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.com.anhemsoftware.license_app.entity.User;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignInRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignUpRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.response.SignUpResponse;
 import vn.com.anhemsoftware.license_app.service.AuthService;
 
 @RestController
@@ -20,13 +21,13 @@ public class AuthController
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<User> signup(@RequestBody SignUpRequest request) throws Exception
+    public ResponseEntity<SignUpResponse> signup(@RequestBody SignUpRequest request) throws Exception
     {
-        return authService.signUp(request);
+            return authService.signUp(request);
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<User> signup(@RequestBody SignInRequest request) throws Exception
+    public ResponseEntity<User> signin(@RequestBody SignInRequest request) throws Exception
     {
         return authService.signIn(request);
     }

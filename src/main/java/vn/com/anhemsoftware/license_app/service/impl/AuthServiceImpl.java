@@ -8,8 +8,10 @@ import vn.com.anhemsoftware.license_app.entity.User;
 import vn.com.anhemsoftware.license_app.mapper.UserMapper;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignInRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignUpRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.response.SignUpResponse;
 import vn.com.anhemsoftware.license_app.repository.UserRepository;
 import vn.com.anhemsoftware.license_app.service.AuthService;
+import vn.com.anhemsoftware.license_app.service.JWTService;
 import vn.com.anhemsoftware.license_app.util.OptionalValidator;
 
 @Service
@@ -19,9 +21,9 @@ public class AuthServiceImpl implements AuthService
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-
+    private final JWTService jwtService;
     @Override
-    public ResponseEntity<User> signUp(SignUpRequest request) throws Exception
+    public ResponseEntity<SignUpResponse> signUp(SignUpRequest request) throws Exception
     {
         OptionalValidator.of(request , "Request must not be null")
                 .requireNonBlank(SignUpRequest::email,"Email must not be blank")
@@ -30,7 +32,12 @@ public class AuthServiceImpl implements AuthService
 
         User entity = userMapper.toUser(request);
         entity.setPassword(passwordEncoder.encode(request.password()));
-        return ResponseEntity.accepted().body(userRepository.save(entity));
+        User userDB = userRepository.save(entity);
+        String accessToken = jwtService.generateToken(userDB.getEmail());
+        String refreshToken = jwtService.generateRefreshToken(userDB.getEmail());
+        
+        SignUpResponse signUpResponse = new SignUpResponse(accessToken, refreshToken);
+        return ResponseEntity.accepted().body(signUpResponse);
     }
 
     @Override

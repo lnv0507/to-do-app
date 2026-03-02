@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="vn.com.anhemsoftware.license_app.Anhemsoftware_license_app.service.AuthServiceIntegrationTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-08-17T07:43:13.831Z" hostname="Nguyens-MacBook-Air.local" time="0.101">
+  <properties/>
+  <testcase name="testItShouldCreateUser()" classname="vn.com.anhemsoftware.license_app.Anhemsoftware_license_app.service.AuthServiceIntegrationTest" time="0.101"/>
+  <system-out><![CDATA[2025-08-17T14:43:13.827+07:00  INFO 69385 --- [Anhemsoftware-license-app] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [vn.com.anhemsoftware.license_app.Anhemsoftware_license_app.service.AuthServiceIntegrationTest]: AuthServiceIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-08-17T14:43:13.830+07:00  INFO 69385 --- [Anhemsoftware-license-app] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration vn.com.anhemsoftware.license_app.AnhemsoftwareLicenseAppApplication for test class vn.com.anhemsoftware.license_app.Anhemsoftware_license_app.service.AuthServiceIntegrationTest
+Hibernate: insert into user (address,email,full_name,password,phone) values (?,?,?,?,?)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

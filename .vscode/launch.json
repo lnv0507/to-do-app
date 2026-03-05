@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-AnhemsoftwareLicenseAppApplication<to-do-app>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "vn.com.anhemsoftware.license_app.AnhemsoftwareLicenseAppApplication",
+            "projectName": "to-do-app",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

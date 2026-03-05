@@ -1,6 +1,8 @@
 package vn.com.anhemsoftware.license_app.service;
 
-public interface UserService
+import org.springframework.security.core.userdetails.UserDetailsService;
+
+public interface UserService extends UserDetailsService
 {
 
 }

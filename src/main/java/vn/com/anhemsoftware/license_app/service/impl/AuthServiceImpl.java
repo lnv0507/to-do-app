@@ -13,7 +13,6 @@ import vn.com.anhemsoftware.license_app.payload.auth.request.VerifyOtpRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.response.SignUpResponse;
 import vn.com.anhemsoftware.license_app.repository.UserRepository;
 import vn.com.anhemsoftware.license_app.service.AuthService;
-import vn.com.anhemsoftware.license_app.service.EmailService;
 import vn.com.anhemsoftware.license_app.service.JWTService;
 import vn.com.anhemsoftware.license_app.util.OTPGenerator;
 import vn.com.anhemsoftware.license_app.util.OptionalValidator;
@@ -28,7 +27,6 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JWTService jwtService;
-    private final EmailService emailService;
     private final RedisTemplate redisTemplate;
 
     @Override
@@ -50,7 +48,6 @@ public class AuthServiceImpl implements AuthService {
         // storage in redis
         redisTemplate.opsForValue().set("REG:" + request.email(), otpMap, 5, TimeUnit.MINUTES);
 
-        emailService.sendEmail(request.email(), "OTP", otp);
     }
 
     @Override

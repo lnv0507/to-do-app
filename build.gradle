@@ -26,6 +26,16 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// JJWT API
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	testImplementation 'org.springframework.amqp:spring-rabbit-test'
+	// JJWT Implementation (chỉ dùng ở runtime)
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	// Hỗ trợ Jackson cho Spring Boot (chỉ dùng ở runtime)
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -42,6 +52,7 @@ dependencies {
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	runtimeOnly 'org.springframework.boot:spring-boot-docker-compose.yml'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

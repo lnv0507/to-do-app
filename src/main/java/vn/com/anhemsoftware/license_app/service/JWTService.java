@@ -24,5 +24,4 @@ public interface JWTService {
     boolean validateToken(String token, UserDetails userDetails);
     default boolean isTokenValid(String token) { return !isTokenExpired(token); }
 
-    
 }

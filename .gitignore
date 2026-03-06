@@ -1,0 +1,21 @@
+### Thư mục build của Gradle ###
+build/
+.gradle/
+
+### File biên dịch của Java ###
+*.class
+# properties dev
+src/main/resources/application-dev.properties
+
+
+### IDE cụ thể  ###
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+### OS Files ###
+.DS_Store
+Thumbs.db

@@ -1,0 +1,38 @@
+services:
+  mysql-db:
+    image: 'mysql:8.4'
+    environment:
+      - 'MYSQL_DATABASE=anhemsoftware_license_app'
+      - 'MYSQL_ROOT_PASSWORD=root'
+    ports:
+      - '3306:3306'
+    labels:
+      - "org.springframework.boot.service-connection=mysql"
+  rabbitmq:
+    image: 'rabbitmq:3.13-management'
+    container_name: rabbitmq-server
+    ports:
+      - '5672:5672'   # Cổng kết nối cho ứng dụng Spring Boot (AMQP)
+      - '15672:15672' # Cổng truy cập giao diện quản lý (Web UI)
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq # Lưu trữ dữ liệu queue bền vững
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "check_running" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # --- PHẦN THÊM MỚI REDIS ---
+  redis:
+    image: 'redis:7.2-alpine'
+    container_name: redis-server
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6337:6379'
+    command: ["redis-server", "--appendonly", "yes"] # Đảm bảo dữ liệu không mất khi restart
+volumes:
+    rabbitmq_data:
+    redis_data:

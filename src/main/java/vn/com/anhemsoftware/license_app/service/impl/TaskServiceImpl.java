@@ -41,6 +41,7 @@ public class TaskServiceImpl implements TaskService {
         existingTask.setCompleted(taskDetails.isCompleted());
         existingTask.setPriority(taskDetails.getPriority());
         existingTask.setSpecification(taskDetails.getSpecification());
+        existingTask.setDueDate(taskDetails.getDueDate());
 
         return taskRepository.save(existingTask);
     }

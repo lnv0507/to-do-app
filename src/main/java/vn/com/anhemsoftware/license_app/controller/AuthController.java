@@ -45,9 +45,8 @@ public class AuthController {
     }
 
     /**
-     * Phase 2 — OTP Authentication after HIGH risk block.
-     * Frontend receives 403 from /signin (with verificationToken) → calls this
-     * endpoint.
+     * Phase 2 — Xác thực OTP sau HIGH risk block.
+     * Frontend nhận 403 từ /signin (kèm verificationToken) → gọi endpoint này.
      */
     @PostMapping("/verify-device")
     public ResponseEntity<SignUpResponse> verifyDevice(HttpServletRequest request, HttpServletResponse response,
@@ -56,14 +55,14 @@ public class AuthController {
     }
 
     /**
-     * "This is not me" — link in MEDIUM risk email.
-     * No auth required — ActionToken is proof.
+     * "Đây không phải là tôi" — link trong email MEDIUM risk.
+     * Không yêu cầu auth — ActionToken là bằng chứng.
      */
     @GetMapping("/report-device")
     public ResponseEntity<String> reportDevice(@RequestParam String token) throws Exception {
         authService.reportDevice(token);
         return ResponseEntity.ok(
-                "✅ Login session from an unknown device has been revoked. " +
-                        "If you are concerned, please change your password immediately.");
+                "✅ Phiên đăng nhập từ thiết bị lạ đã bị thu hồi. " +
+                        "Nếu lo ngại, hãy đổi mật khẩu ngay.");
     }
 }

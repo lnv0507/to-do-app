@@ -18,27 +18,25 @@ import vn.com.anhemsoftware.license_app.service.impl.UserServiceImpl;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfiguration
-{
+public class SecurityConfiguration {
     @Autowired
     private UserServiceImpl userService;
 
     @Bean
-    public SecurityFilterChain configure(HttpSecurity http) throws Exception
-    {
-       return http.csrf(AbstractHttpConfigurer::disable)
+    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        return http.csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request -> request.requestMatchers("/api/v1/auth/**",
                         "/v3/api-docs/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**").permitAll()
-                        .anyRequest().authenticated()).build();
+                        .anyRequest().authenticated())
+                .build();
     }
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder()
-    {
+    public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -48,7 +46,6 @@ public class SecurityConfiguration
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
-
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

@@ -8,6 +8,7 @@ import vn.com.anhemsoftware.license_app.service.TaskService;
 
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -42,6 +43,7 @@ public class TaskServiceImpl implements TaskService {
         existingTask.setPriority(taskDetails.getPriority());
         existingTask.setSpecification(taskDetails.getSpecification());
         existingTask.setDueDate(taskDetails.getDueDate());
+        existingTask.setImageUrl(taskDetails.getImageUrl());
 
         return taskRepository.save(existingTask);
     }
@@ -50,5 +52,10 @@ public class TaskServiceImpl implements TaskService {
     public void deleteTask(Long id) {
         Task existingTask = getTaskById(id);
         taskRepository.delete(existingTask);
+    }
+
+    @Override
+    public List<Task> getDueTasks() {
+        return taskRepository.findByDueDateLessThanEqualAndCompletedFalse(LocalDate.now());
     }
 }

@@ -42,6 +42,7 @@ public class Task {
 
     @Size(max = 255, message = "Specification không được vượt quá 255 ký tự")
     @Column(length = 255)
+    
     private String specification;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
@@ -56,4 +57,7 @@ public class Task {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
 }

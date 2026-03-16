@@ -2,14 +2,17 @@ package vn.com.anhemsoftware.license_app.controller;
 
 import lombok.RequiredArgsConstructor;
 import vn.com.anhemsoftware.license_app.entity.Task;
+import vn.com.anhemsoftware.license_app.service.S3Service;
 import vn.com.anhemsoftware.license_app.service.TaskService;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -17,6 +20,7 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+    private final S3Service s3Service;
 
     @GetMapping
     public ResponseEntity<List<Task>> getAllTasks() {
@@ -67,6 +71,60 @@ public class TaskController {
             throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
         }
         taskService.deleteTask(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/due")
+    public ResponseEntity<List<Task>> getDueTasks() {
+        List<Task> dueTasks = taskService.getDueTasks();
+        if (dueTasks.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(dueTasks);
+    }
+
+    /**
+     * Upload ảnh cho Task lên AWS S3.
+     * POST /api/tasks/{id}/image
+     * Form-data key: "file"
+     */
+    @PostMapping(value = "/{id}/image", consumes = "multipart/form-data")
+    public ResponseEntity<Map<String, String>> uploadTaskImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+        }
+        // Verify task exists before uploading
+        Task task = taskService.getTaskById(id);
+
+        // Delete old image if present
+        if (task.getImageUrl() != null) {
+            s3Service.deleteFile(task.getImageUrl());
+        }
+
+        String imageUrl = s3Service.uploadTaskImage(file, id);
+        task.setImageUrl(imageUrl);
+        taskService.updateTask(id, task);
+
+        return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+    }
+
+    /**
+     * Xóa ảnh của Task trên AWS S3.
+     * DELETE /api/tasks/{id}/image
+     */
+    @DeleteMapping("/{id}/image")
+    public ResponseEntity<Void> deleteTaskImage(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+        }
+        Task task = taskService.getTaskById(id);
+        if (task.getImageUrl() != null) {
+            s3Service.deleteFile(task.getImageUrl());
+            task.setImageUrl(null);
+            taskService.updateTask(id, task);
+        }
         return ResponseEntity.noContent().build();
     }
 }

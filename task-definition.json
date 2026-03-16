@@ -1,0 +1,295 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:10",
+    "containerDefinitions": [
+        {
+            "name": "mysql-db",
+            "image": "public.ecr.aws/docker/library/mysql:8.0-debian",
+            "cpu": 256,
+            "memory": 1024,
+            "portMappings": [
+                {
+                    "name": "mysql-db-3306-tcp",
+                    "containerPort": 3306,
+                    "hostPort": 3306,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "MYSQL_DATABASE",
+                    "value": "anhemsoftware_license_app"
+                },
+                {
+                    "name": "MYSQL_ROOT_PASSWORD",
+                    "value": "root"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/license-app-task",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "ap-southeast-1",
+                    "awslogs-stream-prefix": "mysql-db"
+                },
+                "secretOptions": []
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "mysqladmin ping -h localhost -u root -proot || exit 1"
+                ],
+                "interval": 15,
+                "timeout": 5,
+                "retries": 10,
+                "startPeriod": 30
+            },
+            "systemControls": []
+        },
+        {
+            "name": "redis-server",
+            "image": "public.ecr.aws/docker/library/redis:alpine",
+            "cpu": 128,
+            "memory": 256,
+            "portMappings": [
+                {
+                    "name": "redis-server-6379-tcp",
+                    "containerPort": 6379,
+                    "hostPort": 6379,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": false,
+            "environment": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/license-app-task",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "ap-southeast-1",
+                    "awslogs-stream-prefix": "redis-server"
+                },
+                "secretOptions": []
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "redis-cli ping || exit 1"
+                ],
+                "interval": 10,
+                "timeout": 5,
+                "retries": 5,
+                "startPeriod": 15
+            },
+            "systemControls": []
+        },
+        {
+            "name": "rabbitmq-server",
+            "image": "public.ecr.aws/docker/library/rabbitmq:latest",
+            "cpu": 128,
+            "memory": 512,
+            "portMappings": [
+                {
+                    "name": "rabbitmq-server-5672-tcp",
+                    "containerPort": 5672,
+                    "hostPort": 5672,
+                    "protocol": "tcp"
+                },
+                {
+                    "name": "rabbitmq-server-15672-tcp",
+                    "containerPort": 15672,
+                    "hostPort": 15672,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": false,
+            "environment": [
+                {
+                    "name": "RABBITMQ_DEFAULT_USER",
+                    "value": "guest"
+                },
+                {
+                    "name": "RABBITMQ_ERLANG_COOKIE",
+                    "value": "secret_cookie_123"
+                },
+                {
+                    "name": "RABBITMQ_DEFAULT_PASS",
+                    "value": "guest"
+                },
+                {
+                    "name": "HOME",
+                    "value": "/tmp"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/license-app-task",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "ap-southeast-1",
+                    "awslogs-stream-prefix": "rabbitmq-server"
+                },
+                "secretOptions": []
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "rabbitmq-diagnostics -q check_running || exit 1"
+                ],
+                "interval": 15,
+                "timeout": 5,
+                "retries": 5,
+                "startPeriod": 40
+            },
+            "systemControls": []
+        },
+        {
+            "name": "license-app",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:latest",
+            "cpu": 512,
+            "memory": 1024,
+            "portMappings": [
+                {
+                    "name": "license-app-8080-tcp",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": false,
+            "environment": [
+                {
+                    "name": "SPRING_MAIL_USERNAME",
+                    "value": "ta84578@gmail.com"
+                },
+                {
+                    "name": "SPRING_DATASOURCE_PASSWORD",
+                    "value": "root"
+                },
+                {
+                    "name": "SPRING_DATASOURCE_URL",
+                    "value": "jdbc:mysql://localhost:3306/anhemsoftware_license_app"
+                },
+                {
+                    "name": "SPRING_MAIL_HOST",
+                    "value": "smtp.gmail.com"
+                },
+                {
+                    "name": "SPRING_DATASOURCE_USERNAME",
+                    "value": "root"
+                },
+                {
+                    "name": "SPRING_RABBITMQ_HOST",
+                    "value": "localhost"
+                },
+                {
+                    "name": "SPRING_DATA_REDIS_HOST",
+                    "value": "localhost"
+                },
+                {
+                    "name": "SPRING_MAIL_PORT",
+                    "value": "587"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "SPRING_MAIL_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl"
+                }
+            ],
+            "dependsOn": [
+                {
+                    "containerName": "mysql-db",
+                    "condition": "HEALTHY"
+                },
+                {
+                    "containerName": "redis-server",
+                    "condition": "HEALTHY"
+                },
+                {
+                    "containerName": "rabbitmq-server",
+                    "condition": "HEALTHY"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/license-app-task",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "ap-southeast-1",
+                    "awslogs-stream-prefix": "license-app"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "license-app-task",
+    "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 10,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "ecs.capability.secrets.asm.environment-variables"
+        },
+        {
+            "name": "ecs.capability.container-health-check"
+        },
+        {
+            "name": "ecs.capability.container-ordering"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE",
+        "MANAGED_INSTANCES"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "registeredAt": "2026-03-16T08:18:40.286Z",
+    "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
+    "tags": []
+}

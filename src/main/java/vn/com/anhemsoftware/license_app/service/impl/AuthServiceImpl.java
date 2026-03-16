@@ -1,12 +1,19 @@
 package vn.com.anhemsoftware.license_app.service.impl;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.com.anhemsoftware.license_app.entity.User;
+import vn.com.anhemsoftware.license_app.entity.UserDevice;
+import vn.com.anhemsoftware.license_app.exception.DeviceVerificationRequiredException;
 import vn.com.anhemsoftware.license_app.mapper.UserMapper;
+import vn.com.anhemsoftware.license_app.payload.auth.internal.OtpCacheDto;
+import vn.com.anhemsoftware.license_app.payload.auth.internal.PendingLoginCache;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignInRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignUpRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.VerifyOtpRequest;

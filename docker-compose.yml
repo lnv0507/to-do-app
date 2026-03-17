@@ -1,18 +1,23 @@
 services:
   mysql-db:
     image: 'mysql:8.4'
+    container_name: mysql-db
     environment:
       - 'MYSQL_DATABASE=anhemsoftware_license_app'
       - 'MYSQL_ROOT_PASSWORD=root'
     ports:
       - '3306:3306'
-    labels:
-      - "org.springframework.boot.service-connection=mysql"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   rabbitmq:
     image: 'rabbitmq:3.13-management'
     container_name: rabbitmq-server
     ports:
-      - '5672:5672'   # Cổng kết nối cho ứng dụng Spring Boot (AMQP)
+      - '5672:5672' # Cổng kết nối cho ứng dụng Spring Boot (AMQP)
       - '15672:15672' # Cổng truy cập giao diện quản lý (Web UI)
     environment:
       RABBITMQ_DEFAULT_USER: 'guest'
@@ -24,7 +29,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  # --- PHẦN THÊM MỚI REDIS ---
   redis:
     image: 'redis:7.2-alpine'
     container_name: redis-server
@@ -32,7 +36,42 @@ services:
       - redis_data:/data
     ports:
       - '6337:6379'
-    command: ["redis-server", "--appendonly", "yes"] # Đảm bảo dữ liệu không mất khi restart
+    command: [ "redis-server", "--appendonly", "yes" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: license-app
+    ports:
+      - '8080:8080'
+    environment:
+      # --- Database ---
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/anhemsoftware_license_app
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      # --- RabbitMQ ---
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      # --- Redis ---
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: on-failure
+
 volumes:
-    rabbitmq_data:
-    redis_data:
+  rabbitmq_data:
+  redis_data:

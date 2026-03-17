@@ -1,5 +1,6 @@
 ### Thư mục build của Gradle ###
 build/
+bin/
 .gradle/
 
 ### File biên dịch của Java ###

@@ -4,6 +4,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -26,8 +27,10 @@ public class JWTServiceImpl implements JWTService {
     private static final long REFRESH_TOKEN_TTL_MS = TimeUnit.DAYS.toMillis(7);
 
     @Override
-    public String generateToken(String email) {
-        return createToken(new HashMap<>(), email);
+    public String generateToken(String email, UUID refreshTokenId) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("jti", refreshTokenId.toString());
+        return createToken(claims, email);
     }
 
     @Override
@@ -43,8 +46,10 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
-    public String generateRefreshToken(String email) {
-        return createRefreshToken(new HashMap<>(), email);
+    public String generateRefreshToken(String email, UUID refreshTokenId) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("jti", refreshTokenId.toString());
+        return createRefreshToken(claims, email);
     }
 
     @Override
@@ -53,52 +58,56 @@ public class JWTServiceImpl implements JWTService {
         return Jwts.builder()
                 .claims(claims)
                 .subject(email)
+                .id(claims.get("jti").toString())
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + REFRESH_TOKEN_TTL_MS))
                 .signWith(getSignInKey(), SIG.HS256)
                 .compact();
     }
-    
+
     @Override
-    public String extractEmail(String token)
-    {
-        return extractClaim(token, Claims::getSubject); 
+    public String extractEmail(String token) {
+        return extractClaim(token, Claims::getSubject);
     }
+
     @Override
-    public Date extractExpiration(String token)
-    {
+    public String extractJti(String token) {
+        return extractClaim(token, Claims::getId);
+    }
+
+    @Override
+    public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
+
     @Override
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver)
-    {
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
+
     @Override
-    public Claims extractAllClaims(String token)
-    {
-         return Jwts.parser()
-        .verifyWith(getSignInKey())
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
+    public Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSignInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
+
     @Override
-    public SecretKey getSignInKey()
-    {
+    public SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
     @Override
-    public boolean isTokenExpired(String token)
-    {
+    public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     @Override
-    public boolean validateToken(String token, UserDetails userDetails)
-    {
+    public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractEmail(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }

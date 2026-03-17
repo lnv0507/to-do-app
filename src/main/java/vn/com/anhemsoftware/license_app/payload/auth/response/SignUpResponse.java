@@ -1,5 +1,5 @@
 package vn.com.anhemsoftware.license_app.payload.auth.response;
 
-public record SignUpResponse()
+public record SignUpResponse(String accessToken)
 {
 }

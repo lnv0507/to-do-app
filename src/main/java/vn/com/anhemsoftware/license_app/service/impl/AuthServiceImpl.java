@@ -34,16 +34,6 @@ import vn.com.anhemsoftware.license_app.util.RequestUtils;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import vn.com.anhemsoftware.license_app.service.EmailService;
-import vn.com.anhemsoftware.license_app.service.JWTService;
-import vn.com.anhemsoftware.license_app.util.CookieUtil;
-import vn.com.anhemsoftware.license_app.util.IpSubnetUtil;
-import vn.com.anhemsoftware.license_app.util.OTPGenerator;
-import vn.com.anhemsoftware.license_app.util.RequestUtils;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor

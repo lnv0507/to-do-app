@@ -27,13 +27,13 @@ public class AuthController {
 
     @PostMapping("/confirm-otp")
     public ResponseEntity<SignUpResponse> confirmOtp(HttpServletRequest request, HttpServletResponse response,
-            @RequestBody VerifyOtpRequest verifyOtpRequest) throws Exception {
+                                                     @RequestBody VerifyOtpRequest verifyOtpRequest) throws Exception {
         return authService.confirmOtp(request, response, verifyOtpRequest);
     }
 
     @PostMapping("/signin")
     public ResponseEntity<SignUpResponse> signin(HttpServletRequest request, HttpServletResponse response,
-            @RequestBody SignInRequest signInRequest)
+                                                 @RequestBody SignInRequest signInRequest)
             throws Exception {
         return authService.signIn(response, signInRequest, request);
     }
@@ -50,7 +50,7 @@ public class AuthController {
      */
     @PostMapping("/verify-device")
     public ResponseEntity<SignUpResponse> verifyDevice(HttpServletRequest request, HttpServletResponse response,
-            @Valid @RequestBody VerifyDeviceRequest verifyDeviceRequest) throws Exception {
+                                                       @Valid @RequestBody VerifyDeviceRequest verifyDeviceRequest) throws Exception {
         return authService.verifyDevice(request, response, verifyDeviceRequest);
     }
 

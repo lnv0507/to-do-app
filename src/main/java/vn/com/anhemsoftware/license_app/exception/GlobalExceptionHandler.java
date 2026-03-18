@@ -68,6 +68,29 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(NOT_FOUND).body(ApiErrorResponse.notFound(title, details, instanceId));
     }
 
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleTaskNotFoundException(TaskNotFoundException ex,
+            HttpServletRequest request) {
+        String title = "Không tìm thấy công việc (Task)";
+        String detail = ex.getMessage();
+        String instanceId = request.getRequestURI();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiErrorResponse.notFound(title, detail, instanceId));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String title = "Lỗi xác thực dữ liệu";
+        String details = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+        String instanceId = request.getRequestURI();
+        return ResponseEntity.status(CLIENT_ERROR)
+                .body(ApiErrorResponse.clientError(title, details, instanceId));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUncheckedException(Exception ex, HttpServletRequest request) {
         String title = ex.getLocalizedMessage();

@@ -24,7 +24,6 @@ import vn.com.anhemsoftware.license_app.payload.auth.response.SignUpResponse;
 import vn.com.anhemsoftware.license_app.repository.UserDeviceRepository;
 import vn.com.anhemsoftware.license_app.repository.UserRepository;
 import vn.com.anhemsoftware.license_app.service.AuthService;
-import vn.com.anhemsoftware.license_app.service.EmailService;
 import vn.com.anhemsoftware.license_app.service.JWTService;
 import vn.com.anhemsoftware.license_app.util.CookieUtil;
 import vn.com.anhemsoftware.license_app.util.IpSubnetUtil;

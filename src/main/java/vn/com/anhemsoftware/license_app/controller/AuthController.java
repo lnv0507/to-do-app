@@ -27,13 +27,13 @@ public class AuthController {
 
     @PostMapping("/confirm-otp")
     public ResponseEntity<SignUpResponse> confirmOtp(HttpServletRequest request, HttpServletResponse response,
-                                                     @RequestBody VerifyOtpRequest verifyOtpRequest) throws Exception {
+            @RequestBody VerifyOtpRequest verifyOtpRequest) throws Exception {
         return authService.confirmOtp(request, response, verifyOtpRequest);
     }
 
     @PostMapping("/signin")
     public ResponseEntity<SignUpResponse> signin(HttpServletRequest request, HttpServletResponse response,
-                                                 @RequestBody SignInRequest signInRequest)
+            @RequestBody SignInRequest signInRequest)
             throws Exception {
         return authService.signIn(response, signInRequest, request);
     }
@@ -45,24 +45,25 @@ public class AuthController {
     }
 
     /**
-     * Phase 2 — Xác thực OTP sau HIGH risk block.
-     * Frontend nhận 403 từ /signin (kèm verificationToken) → gọi endpoint này.
+     * Phase 2 — OTP Authentication after HIGH risk block.
+     * Frontend receives 403 from /signin (with verificationToken) → calls this
+     * endpoint.
      */
     @PostMapping("/verify-device")
     public ResponseEntity<SignUpResponse> verifyDevice(HttpServletRequest request, HttpServletResponse response,
-                                                       @Valid @RequestBody VerifyDeviceRequest verifyDeviceRequest) throws Exception {
+            @Valid @RequestBody VerifyDeviceRequest verifyDeviceRequest) throws Exception {
         return authService.verifyDevice(request, response, verifyDeviceRequest);
     }
 
     /**
-     * "Đây không phải là tôi" — link trong email MEDIUM risk.
-     * Không yêu cầu auth — ActionToken là bằng chứng.
+     * "This is not me" — link in MEDIUM risk email.
+     * No auth required — ActionToken is proof.
      */
     @GetMapping("/report-device")
     public ResponseEntity<String> reportDevice(@RequestParam String token) throws Exception {
         authService.reportDevice(token);
         return ResponseEntity.ok(
-                "✅ Phiên đăng nhập từ thiết bị lạ đã bị thu hồi. " +
-                        "Nếu lo ngại, hãy đổi mật khẩu ngay.");
+                "✅ Login session from an unknown device has been revoked. " +
+                        "If you are concerned, please change your password immediately.");
     }
 }

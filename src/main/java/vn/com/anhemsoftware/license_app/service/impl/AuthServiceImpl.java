@@ -24,6 +24,7 @@ import vn.com.anhemsoftware.license_app.payload.auth.response.SignUpResponse;
 import vn.com.anhemsoftware.license_app.repository.UserDeviceRepository;
 import vn.com.anhemsoftware.license_app.repository.UserRepository;
 import vn.com.anhemsoftware.license_app.service.AuthService;
+import vn.com.anhemsoftware.license_app.service.EmailService;
 import vn.com.anhemsoftware.license_app.service.JWTService;
 import vn.com.anhemsoftware.license_app.util.CookieUtil;
 import vn.com.anhemsoftware.license_app.util.IpSubnetUtil;
@@ -42,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private static final String REDIS_REFRESH = "REFRESH:";
     private static final String REDIS_USER_SESSIONS = "USER_SESSIONS:";
     private static final String REDIS_ACTION_TOKEN = "ACTION_TOKEN:";
-    /** Pending HIGH-risk login waiting for OTP — TTL 10 minutes */
+    /** Pending HIGH-risk login chờ OTP — TTL 10 phút */
     private static final String REDIS_PENDING_LOGIN = "PENDING_LOGIN:";
 
     // ─── TTL constants ─────────────────────────────────────────────────────────
@@ -76,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // CONFIRM OTP (registration)
+    // CONFIRM OTP (đăng ký)
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
@@ -99,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
         userEntity.setPassword(passwordEncoder.encode(cacheData.signUpRequest().password()));
         User userDB = userRepository.save(userEntity);
 
-        // First device from registration → trusted immediately
+        // Thiết bị đầu tiên từ đăng ký → trusted ngay
         UUID refreshTokenId = UUID.randomUUID();
         String accessToken = jwtService.generateToken(userDB.getEmail(), refreshTokenId);
         String refreshToken = jwtService.generateRefreshToken(userDB.getEmail(), refreshTokenId);
@@ -157,40 +158,40 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.opsForValue().set(REDIS_REFRESH + refreshTokenId, "ACTIVE", maxAgeSeconds, TimeUnit.SECONDS);
         saveUserSession(userDB.getId(), refreshTokenId.toString(), maxAgeSeconds, request);
 
-        // 4. Handle device by risk level
+        // 4. Xử lý device theo risk level
         handleDeviceByRisk(risk, userDB, request, response, refreshTokenId);
 
         return ResponseEntity.ok(new SignUpResponse(accessToken));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // VERIFY DEVICE — Phase 2: OTP verification after HIGH risk block
+    // VERIFY DEVICE — Phase 2: xác thực OTP sau HIGH risk block
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
     public ResponseEntity<SignUpResponse> verifyDevice(HttpServletRequest request,
             HttpServletResponse response,
             VerifyDeviceRequest verifyDeviceRequest) throws Exception {
-        // 1. Get pending context from Redis
+        // 1. Lấy pending context từ Redis
         String key = REDIS_PENDING_LOGIN + verifyDeviceRequest.verificationToken();
         PendingLoginCache pending = (PendingLoginCache) redisTemplate.opsForValue().get(key);
         if (pending == null) {
-            throw new Exception("Verification code does not exist or has expired (10 minutes).");
+            throw new Exception("Mã xác thực không tồn tại hoặc đã hết hạn (10 phút).");
         }
 
-        // 2. Check OTP
+        // 2. Kiểm tra OTP
         if (!pending.otp().equals(verifyDeviceRequest.otp())) {
-            throw new IllegalArgumentException("Incorrect OTP.");
+            throw new IllegalArgumentException("OTP không đúng.");
         }
 
-        // 3. Delete one-time key
+        // 3. Xoá key one-time
         redisTemplate.delete(key);
 
-        // 4. Find user by email
+        // 4. Tìm lại user
         User userDB = userRepository.findByEmail(pending.email())
                 .orElseThrow(() -> new Exception("User not found"));
 
-        // 5. Create full session
+        // 5. Tạo session đầy đủ
         UUID refreshTokenId = UUID.randomUUID();
         String accessToken = jwtService.generateToken(userDB.getEmail(), refreshTokenId);
         String refreshToken = jwtService.generateRefreshToken(userDB.getEmail(), refreshTokenId);
@@ -200,7 +201,7 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.opsForValue().set(REDIS_REFRESH + refreshTokenId, "ACTIVE", maxAgeSeconds, TimeUnit.SECONDS);
         saveUserSession(userDB.getId(), refreshTokenId.toString(), maxAgeSeconds, request);
 
-        // 6. Create new UserDevice with isTrusted=true (OTP verified = trusted)
+        // 6. Tạo UserDevice mới với isTrusted=true (đã xác thực OTP = tin cậy)
         String newDeviceId = UUID.randomUUID().toString();
         UserDevice newDevice = UserDevice.builder()
                 .user(userDB)
@@ -272,19 +273,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // REPORT DEVICE — "This is not me"
+    // REPORT DEVICE — "Đây không phải là tôi"
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
     public void reportDevice(String actionToken) throws Exception {
         String deviceId = (String) redisTemplate.opsForValue().get(REDIS_ACTION_TOKEN + actionToken);
         if (deviceId == null) {
-            throw new Exception("Token does not exist or has expired.");
+            throw new Exception("Token không tồn tại hoặc đã hết hạn.");
         }
         redisTemplate.delete(REDIS_ACTION_TOKEN + actionToken);
 
         UserDevice device = userDeviceRepository.findByDeviceId(deviceId)
-                .orElseThrow(() -> new Exception("Device not found."));
+                .orElseThrow(() -> new Exception("Không tìm thấy thiết bị."));
 
         String jti = device.getSessionJti();
         Long userId = device.getUser().getId();
@@ -292,9 +293,8 @@ public class AuthServiceImpl implements AuthService {
             redisTemplate.delete(REDIS_REFRESH + jti);
             redisTemplate.opsForHash().delete(REDIS_USER_SESSIONS + userId, jti);
         }
-        // Reset isTrusted=false → the next login from this device
-        // will be evaluated as MEDIUM (if known IP) or HIGH (if unknown IP) and an
-        // email will be sent again
+        // Đặt lại isTrusted=false → lần đăng nhập tiếp theo từ thiết bị này
+        // sẽ bị đánh giá là MEDIUM (nếu IP quen) hoặc HIGH (nếu IP lạ) và gửi mail lại
         device.setIsTrusted(false);
         userDeviceRepository.save(device);
     }
@@ -308,17 +308,17 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * Calculate risk level based on device token + subnet.
-     * NONE : isTrusted=true + same subnet → allow access
-     * LOW : isTrusted=true + different subnet → allow access (reset modem OK)
-     * MEDIUM : unknown device + same subnet → allow access + warning email
-     * HIGH : unknown device + different subnet → BLOCK + OTP
+     * Tính risk level dựa trên device token + subnet.
+     * NONE : isTrusted=true + cùng subnet → vào thẳng
+     * LOW : isTrusted=true + khác subnet → vào thẳng (reset modem OK)
+     * MEDIUM : device lạ + cùng subnet → vào + warning email
+     * HIGH : device lạ + khác subnet → CHẶN + OTP
      */
     private RiskLevel evaluateRisk(User userDB, HttpServletRequest request) {
         String deviceIdCookie = CookieUtil.read(request, "device_id");
         String currentIp = RequestUtils.getClientIp(request);
 
-        // ─── Case: has device cookie ──────────────────────────────────────────
+        // ─── Case: có device cookie ────────────────────────────────────────────
         if (deviceIdCookie != null) {
             UserDevice existing = userDeviceRepository
                     .findByUserIdAndDeviceId(userDB.getId(), deviceIdCookie)
@@ -326,24 +326,24 @@ public class AuthServiceImpl implements AuthService {
 
             if (existing != null) {
                 if (Boolean.TRUE.equals(existing.getIsTrusted())) {
-                    // NONE: trusted device + same subnet
-                    // LOW : trusted device + IP changed (reset modem)
+                    // NONE: device tin cậy + cùng subnet
+                    // LOW : device tin cậy + IP đổi (reset modem)
                     return IpSubnetUtil.isSameSubnet(currentIp, existing.getLastIp())
                             ? RiskLevel.NONE
                             : RiskLevel.LOW;
                 }
-                // isTrusted=false → known but not trusted (previously reported)
+                // isTrusted=false → đã biết nhưng chưa tin (bị report trước đó)
                 return IpSubnetUtil.isSameSubnet(currentIp, existing.getLastIp())
                         ? RiskLevel.MEDIUM
                         : RiskLevel.HIGH;
             }
-            // Cookie exists but not found in DB → treated as new device
+            // Cookie có nhưng không tìm thấy trong DB → coi như thiết bị mới
         }
 
-        // ─── Case: no cookie (new device) or invalid cookie ──────────────────
-        // Compare IP with ALL known devices of the user
-        // → Same subnet as any device: MEDIUM (known IP, new device)
-        // → No subnet match: HIGH (unknown IP + unknown device)
+        // ─── Case: không có cookie (new device) hoặc cookie không hợp lệ ───────
+        // So IP với TẤT CẢ các thiết bị đã biết của user
+        // → Cùng subnet với bất kỳ device nào: MEDIUM (IP quen, device mới)
+        // → Không khớp subnet nào: HIGH (IP lạ + device lạ)
         boolean ipKnown = userDeviceRepository.findAllByUserId(userDB.getId())
                 .stream()
                 .anyMatch(d -> IpSubnetUtil.isSameSubnet(currentIp, d.getLastIp()));
@@ -352,8 +352,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * NONE / LOW / MEDIUM: update or create device.
-     * HIGH is not called here (thrown earlier in signIn).
+     * NONE / LOW / MEDIUM: update hoặc tạo device.
+     * HIGH không được gọi vào đây (đã throw trước ở signIn).
      */
     private void handleDeviceByRisk(RiskLevel risk, User userDB, HttpServletRequest request,
             HttpServletResponse response, UUID refreshTokenId) {
@@ -362,7 +362,7 @@ public class AuthServiceImpl implements AuthService {
         String currentUa = request.getHeader("User-Agent");
         long now = System.currentTimeMillis();
 
-        // NONE & LOW: trusted device already exists — silent update
+        // NONE & LOW: trusted device đã có — update silent
         if (risk == RiskLevel.NONE || risk == RiskLevel.LOW) {
             UserDevice existing = userDeviceRepository
                     .findByUserIdAndDeviceId(userDB.getId(), deviceIdCookie)
@@ -377,17 +377,16 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
 
-        // MEDIUM: unknown device + known IP → create new device isTrusted=true +
-        // warning email
-        // Known IP → high probability of a real user (changed device / reinstalled OS).
-        // Trust immediately, but still warn the user.
-        // If it is not them, click "This is not me" link → revoke session +
+        // MEDIUM: device lạ + IP quen → tạo device mới isTrusted=true + warning email
+        // IP quen → khả năng cao là user thật (đổi thiết bị / reinstall OS).
+        // Tin tưởng ngay, nhưng vẫn cảnh báo để user biết.
+        // Nếu không phải họ, click link "Không phải tôi" → revoke session +
         // isTrusted=false.
         String newDeviceId = UUID.randomUUID().toString();
         UserDevice newDevice = UserDevice.builder()
                 .user(userDB)
                 .deviceId(newDeviceId)
-                .isTrusted(true) // trusted immediately because IP is known
+                .isTrusted(true) // trusted ngay vì IP quen
                 .sessionJti(refreshTokenId.toString())
                 .userAgent(currentUa)
                 .lastActive(now)
@@ -397,36 +396,35 @@ public class AuthServiceImpl implements AuthService {
         userDeviceRepository.save(newDevice);
         setDeviceIdCookie(response, newDeviceId, TimeUnit.DAYS.toSeconds(DEVICE_COOKIE_DAYS));
 
-        // ActionToken 24h for "This is not me" link
+        // ActionToken 24h cho link "Đây không phải là tôi"
         String actionToken = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set(
                 REDIS_ACTION_TOKEN + actionToken, newDeviceId, ACTION_TOKEN_HOURS, TimeUnit.HOURS);
 
         String reportLink = "http://localhost:8080/api/v1/auth/report-device?token=" + actionToken;
         String emailBody = """
-                System detected a login from an untrusted device to your account.
+                Hệ thống phát hiện đăng nhập từ thiết bị không tin cậy vào tài khoản của bạn.
 
-                🖥  Device: %s
-                🌐  IP Address: %s
-                ⚠️  Risk Level: MEDIUM (known IP but untrusted device)
+                🖥  Thiết bị : %s
+                🌐  Địa chỉ IP: %s
+                ⚠️  Mức rủi ro: MEDIUM (IP quen nhưng thiết bị chưa tin cậy)
 
-                If THIS IS NOT YOU, click the link to revoke the session immediately:
+                Nếu ĐÂY KHÔNG PHẢI LÀ BẠN, nhấn link để thu hồi phiên đăng nhập ngay:
                 👉 %s
 
-                The link is valid for 24 hours.
+                Link có hiệu lực trong 24 giờ.
                 """.formatted(currentUa, currentIp, reportLink);
 
         emailService.sendEmail(
                 userDB.getEmail(),
-                "⚠️ Warning: Login from untrusted device",
+                "⚠️ Cảnh báo: Đăng nhập từ thiết bị chưa tin cậy",
                 emailBody);
     }
 
     /**
-     * HIGH risk: no session created, generate OTP + verificationToken, send email,
-     * throw
+     * HIGH risk: không tạo session, sinh OTP + verificationToken, gửi email, throw
      * exception.
-     * Frontend receives 403 + verificationToken → redirect to OTP entry screen.
+     * Frontend nhận 403 + verificationToken → redirect sang màn nhập OTP.
      */
     private void handleHighRisk(User userDB, HttpServletRequest request) {
         String currentIp = RequestUtils.getClientIp(request);
@@ -439,26 +437,26 @@ public class AuthServiceImpl implements AuthService {
                 REDIS_PENDING_LOGIN + verificationToken, pending, PENDING_LOGIN_MINUTES, TimeUnit.MINUTES);
 
         String emailBody = """
-                Someone is trying to log in to your account from a completely new device and IP.
+                Có người đang cố đăng nhập vào tài khoản của bạn từ một thiết bị và IP hoàn toàn mới.
 
-                🖥  Device: %s
-                🌐  IP Address: %s
-                ⚠️  Risk Level: HIGH
+                🖥  Thiết bị : %s
+                🌐  Địa chỉ IP: %s
+                ⚠️  Mức rủi ro: HIGH
 
-                If THIS IS YOU, please enter the following OTP into the application:
+                Nếu ĐÂY LÀ BẠN, hãy nhập mã OTP sau vào ứng dụng:
 
-                🔐  OTP Code: %s
+                🔐  Mã OTP: %s
 
-                The code is valid for 10 minutes.
-                If it is not you, please ignore this email. The system has blocked this login.
+                Mã có hiệu lực trong 10 phút.
+                Nếu không phải bạn, hãy bỏ qua email này. Hệ thống đã chặn đăng nhập này.
                 """.formatted(currentUa, currentIp, otp);
 
         emailService.sendEmail(
                 userDB.getEmail(),
-                "🔐 New Login Verification — Your OTP Code",
+                "🔐 Xác thực đăng nhập mới — Mã OTP của bạn",
                 emailBody);
 
-        // Throw → GlobalExceptionHandler returns 403 + verificationToken to Frontend
+        // Throw → GlobalExceptionHandler trả 403 + verificationToken cho Frontend
         throw new DeviceVerificationRequiredException(verificationToken);
     }
 

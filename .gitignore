@@ -1,9 +1,8 @@
 ### Thư mục build của Gradle ###
 build/
-**/build/
 bin/
 .gradle/
-**/.gradle/
+
 
 ### File biên dịch của Java ###
 *.class
@@ -15,7 +14,6 @@ src/main/resources/application-dev.properties
 .idea/
 *.iml
 .vscode/
-**/.vscode/
 .settings/
 .classpath
 .project
@@ -23,3 +21,5 @@ src/main/resources/application-dev.properties
 ### OS Files ###
 .DS_Store
 Thumbs.db
+bootRun_error.log
+bootRun.log

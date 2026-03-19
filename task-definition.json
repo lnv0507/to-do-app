@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:10",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:11",
     "containerDefinitions": [
         {
             "name": "mysql-db",
@@ -178,8 +178,16 @@
                     "value": "jdbc:mysql://localhost:3306/anhemsoftware_license_app"
                 },
                 {
+                    "name": "AWS_ACCESS_KEY_ID",
+                    "value": "AKIAUJEM2GRJ656I7E5N"
+                },
+                {
                     "name": "SPRING_MAIL_HOST",
                     "value": "smtp.gmail.com"
+                },
+                {
+                    "name": "AWS_SECRET_ACCESS_KEY",
+                    "value": "uK3uK1cwuo+jRgKcd0lX8RDpXCg8JvdcjlXf/vWx"
                 },
                 {
                     "name": "SPRING_DATASOURCE_USERNAME",
@@ -188,6 +196,10 @@
                 {
                     "name": "SPRING_RABBITMQ_HOST",
                     "value": "localhost"
+                },
+                {
+                    "name": "AWS_S3_BUCKET_NAME",
+                    "value": "amz-s3-demo-294500578387"
                 },
                 {
                     "name": "SPRING_DATA_REDIS_HOST",
@@ -236,7 +248,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 10,
+    "revision": 11,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -289,7 +301,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-03-16T08:18:40.286Z",
+    "registeredAt": "2026-03-19T13:43:29.150Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

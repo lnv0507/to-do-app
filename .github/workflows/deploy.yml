@@ -9,7 +9,7 @@ env:
   ECR_REPOSITORY: ojt/anhemsoftware
   ECS_SERVICE: license-app-task-service-k54d5wco
   ECS_CLUSTER: astonishing-crocodile-rfnrhi
-  CONTAINER_NAME: license-app-container
+  CONTAINER_NAME: license-app
 
 jobs:
   build-and-test:

@@ -34,7 +34,7 @@ public class Task {
     private String description;
 
     @Column(nullable = false)
-    private boolean completed = false;
+    private boolean completed;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -42,7 +42,7 @@ public class Task {
 
     @Size(max = 255, message = "Specification không được vượt quá 255 ký tự")
     @Column(length = 255)
-    
+
     private String specification;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")

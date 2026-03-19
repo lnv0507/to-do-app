@@ -56,6 +56,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-tomcat'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
 	implementation 'org.mapstruct:mapstruct:1.6.3'
+	runtimeOnly 'com.mysql:mysql-connector-j'
 	// IP subnet comparison for RBA (Risk-Based Authentication)
 	implementation 'com.github.seancfoley:ipaddress:5.5.0'
 	compileOnly 'org.projectlombok:lombok'

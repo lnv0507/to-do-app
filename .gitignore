@@ -3,6 +3,7 @@ build/
 bin/
 .gradle/
 
+
 ### File biên dịch của Java ###
 *.class
 # properties dev
@@ -20,3 +21,5 @@ src/main/resources/application-dev.properties
 ### OS Files ###
 .DS_Store
 Thumbs.db
+bootRun_error.log
+bootRun.log

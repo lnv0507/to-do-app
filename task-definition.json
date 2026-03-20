@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:11",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:14",
     "containerDefinitions": [
         {
             "name": "mysql-db",
@@ -152,7 +152,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:latest",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:2e5392443c1f31fc52d326510332b5425da467ad",
             "cpu": 512,
             "memory": 1024,
             "portMappings": [
@@ -170,16 +170,16 @@
                     "value": "ta84578@gmail.com"
                 },
                 {
+                    "name": "AWS_ACCESS_KEY_ID",
+                    "value": "AKIAUJEM2GRJ656I7E5N"
+                },
+                {
                     "name": "SPRING_DATASOURCE_PASSWORD",
                     "value": "root"
                 },
                 {
                     "name": "SPRING_DATASOURCE_URL",
                     "value": "jdbc:mysql://localhost:3306/anhemsoftware_license_app"
-                },
-                {
-                    "name": "AWS_ACCESS_KEY_ID",
-                    "value": "AKIAUJEM2GRJ656I7E5N"
                 },
                 {
                     "name": "SPRING_MAIL_HOST",
@@ -215,7 +215,7 @@
             "secrets": [
                 {
                     "name": "SPRING_MAIL_PASSWORD",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl"
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:SPRING_MAIL_PASSWORD::"
                 }
             ],
             "dependsOn": [
@@ -248,7 +248,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 11,
+    "revision": 14,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -289,8 +289,8 @@
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "FARGATE",
-        "MANAGED_INSTANCES"
+        "MANAGED_INSTANCES",
+        "FARGATE"
     ],
     "requiresCompatibilities": [
         "FARGATE"
@@ -301,7 +301,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-03-19T13:43:29.150Z",
+    "registeredAt": "2026-03-20T06:38:44.065Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

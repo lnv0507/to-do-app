@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:15",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:22",
     "containerDefinitions": [
         {
             "name": "mysql-db",
@@ -152,7 +152,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:2e5392443c1f31fc52d326510332b5425da467ad",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:8a93bfc57ac58695373abea8519b96f35ce2c049",
             "cpu": 512,
             "memory": 1024,
             "portMappings": [
@@ -188,6 +188,10 @@
                 {
                     "name": "AWS_SECRET_ACCESS_KEY",
                     "value": "uK3uK1cwuo+jRgKcd0lX8RDpXCg8JvdcjlXf/vWx"
+                },
+                {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "prod"
                 },
                 {
                     "name": "SPRING_DATASOURCE_USERNAME",
@@ -248,7 +252,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 15,
+    "revision": 22,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -301,7 +305,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-03-20T06:38:44.065Z",
+    "registeredAt": "2026-03-24T06:18:33.038Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

@@ -26,6 +26,7 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// JJWT API
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'

@@ -58,4 +58,16 @@ public class TaskServiceImpl implements TaskService {
     public List<Task> getDueTasks() {
         return taskRepository.findByDueDateLessThanEqualAndCompletedFalse(LocalDate.now());
     }
+
+    @Override
+    public List<Task> getFavoriteTasks() {
+        return taskRepository.findByFavoriteTrue();
+    }
+
+    @Override
+    public Task setFavorite(Long id, boolean favorite) {
+        Task existingTask = getTaskById(id);
+        existingTask.setFavorite(favorite);
+        return taskRepository.save(existingTask);
+    }
 }

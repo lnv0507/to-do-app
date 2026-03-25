@@ -16,4 +16,8 @@ Task updateTask(Long id, Task taskDetails);
     void deleteTask(Long id);
 
     List<Task> getDueTasks();
+
+    List<Task> getFavoriteTasks();
+
+    Task setFavorite(Long id, boolean favorite);
 }

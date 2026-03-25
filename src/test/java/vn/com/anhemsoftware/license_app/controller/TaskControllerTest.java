@@ -10,12 +10,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import vn.com.anhemsoftware.license_app.entity.Priority;
 import vn.com.anhemsoftware.license_app.entity.Task;
 import vn.com.anhemsoftware.license_app.exception.GlobalExceptionHandler;
 import vn.com.anhemsoftware.license_app.exception.TaskNotFoundException;
+import vn.com.anhemsoftware.license_app.service.S3Service;
 import vn.com.anhemsoftware.license_app.service.TaskService;
 
 import java.util.Collections;
@@ -32,6 +34,9 @@ class TaskControllerTest {
 
     @Mock
     private TaskService taskService;
+
+        @Mock
+        private S3Service s3Service;
 
     @InjectMocks
     private TaskController taskController;
@@ -56,14 +61,15 @@ class TaskControllerTest {
 
     @Test
     void getAllTasks_returnsTasks() throws Exception {
-        Task task = Task.builder().id(1L).title("Write tests").priority(Priority.HIGH).build();
+        Task task = Task.builder().id(1L).title("Write tests").priority(Priority.HIGH).favorite(true).build();
         when(taskService.getAllTasks()).thenReturn(List.of(task));
 
         mockMvc.perform(get("/api/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].title").value("Write tests"))
-                .andExpect(jsonPath("$[0].priority").value("HIGH"));
+                .andExpect(jsonPath("$[0].priority").value("HIGH"))
+                .andExpect(jsonPath("$[0].isFavorite").value(true));
     }
 
     @Test
@@ -86,14 +92,15 @@ class TaskControllerTest {
 
     @Test
     void getTaskById_returnsTask() throws Exception {
-        Task task = Task.builder().id(1L).title("My Task").completed(false).build();
+                Task task = Task.builder().id(1L).title("My Task").completed(false).favorite(false).build();
         when(taskService.getTaskById(1L)).thenReturn(task);
 
         mockMvc.perform(get("/api/tasks/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("My Task"))
-                .andExpect(jsonPath("$.completed").value(false));
+                .andExpect(jsonPath("$.completed").value(false))
+                .andExpect(jsonPath("$.isFavorite").value(false));
     }
 
     @Test
@@ -244,6 +251,64 @@ class TaskControllerTest {
         verifyNoInteractions(taskService);
     }
 
+        // ─────────────────────── GET /api/tasks/favorites ───────────────────────
+
+        @Test
+        void getFavoriteTasks_returnsTasks() throws Exception {
+                Task task = Task.builder().id(1L).title("Fav task").favorite(true).build();
+                when(taskService.getFavoriteTasks()).thenReturn(List.of(task));
+
+                mockMvc.perform(get("/api/tasks/favorites"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].id").value(1))
+                        .andExpect(jsonPath("$[0].isFavorite").value(true));
+        }
+
+        @Test
+        void getFavoriteTasks_returnsNoContentWhenEmpty() throws Exception {
+                when(taskService.getFavoriteTasks()).thenReturn(Collections.emptyList());
+
+                mockMvc.perform(get("/api/tasks/favorites"))
+                                .andExpect(status().isNoContent());
+        }
+
+        // ─────────────────────── PATCH /api/tasks/{id}/favorite ──────────────────
+
+        @Test
+        void setTaskFavorite_withRequestParam_updatesFavorite() throws Exception {
+                Task updated = Task.builder().id(1L).title("Task").favorite(true).build();
+                when(taskService.setFavorite(1L, true)).thenReturn(updated);
+
+                mockMvc.perform(patch("/api/tasks/1/favorite")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"isFavorite\":true}"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                        .andExpect(jsonPath("$.isFavorite").value(true));
+
+                verify(taskService).setFavorite(1L, true);
+        }
+
+        @Test
+            void setTaskFavorite_returns400WhenBodyMissingIsFavorite() throws Exception {
+                mockMvc.perform(patch("/api/tasks/1/favorite")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}"))
+                        .andExpect(status().isBadRequest());
+
+                verifyNoInteractions(taskService);
+        }
+
+        @Test
+        void setTaskFavorite_returns400WhenIdIsInvalid() throws Exception {
+                mockMvc.perform(patch("/api/tasks/0/favorite")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"isFavorite\":true}"))
+                                .andExpect(status().isBadRequest());
+
+                verifyNoInteractions(taskService);
+        }
+
     // ─────────────────────────── DELETE /api/tasks/{id} ───────────────────────
 
     @Test
@@ -280,4 +345,44 @@ class TaskControllerTest {
 
         verifyNoInteractions(taskService);
     }
+
+        // ─────────────────────── POST /api/tasks/{id}/image ──────────────────────
+
+        @Test
+        void uploadTaskImage_returnsImageUrlAndUpdatesTask() throws Exception {
+                Task existingTask = Task.builder().id(1L).title("Task with old image").imageUrl("https://s3/old.png").build();
+                when(taskService.getTaskById(1L)).thenReturn(existingTask);
+                when(s3Service.uploadTaskImage(any(), eq(1L))).thenReturn("https://s3/new.png");
+
+                MockMultipartFile file = new MockMultipartFile(
+                                "file",
+                                "task.png",
+                                MediaType.IMAGE_PNG_VALUE,
+                                "fake-image-content".getBytes()
+                );
+
+                mockMvc.perform(multipart("/api/tasks/1/image").file(file))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.imageUrl").value("https://s3/new.png"));
+
+                verify(taskService).getTaskById(1L);
+                verify(s3Service).deleteFile("https://s3/old.png");
+                verify(s3Service).uploadTaskImage(any(), eq(1L));
+                verify(taskService).updateTask(eq(1L), any(Task.class));
+        }
+
+        // ───────────────────── DELETE /api/tasks/{id}/image ──────────────────────
+
+        @Test
+        void deleteTaskImage_returnsNoContentAndDeletesImage() throws Exception {
+                Task existingTask = Task.builder().id(1L).title("Task with image").imageUrl("https://s3/image.png").build();
+                when(taskService.getTaskById(1L)).thenReturn(existingTask);
+
+                mockMvc.perform(delete("/api/tasks/1/image"))
+                                .andExpect(status().isNoContent());
+
+                verify(taskService).getTaskById(1L);
+                verify(s3Service).deleteFile("https://s3/image.png");
+                verify(taskService).updateTask(eq(1L), any(Task.class));
+        }
 }

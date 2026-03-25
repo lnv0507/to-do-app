@@ -1,7 +1,9 @@
 ### Thư mục build của Gradle ###
 build/
+**/build/
 bin/
 .gradle/
+**/.gradle/
 
 
 ### File biên dịch của Java ###
@@ -10,10 +12,11 @@ bin/
 src/main/resources/application-dev.properties
 
 
-### IDE cụ thể  ###
+### IDE cu the ###
 .idea/
 *.iml
 .vscode/
+**/.vscode/
 .settings/
 .classpath
 .project

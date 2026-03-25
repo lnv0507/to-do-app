@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,10 @@ public class Task {
 
     @Column(nullable = false)
     private boolean completed;
+
+    @JsonProperty("isFavorite")
+    @Column(name = "is_favorite", nullable = false)
+    private boolean favorite = false;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

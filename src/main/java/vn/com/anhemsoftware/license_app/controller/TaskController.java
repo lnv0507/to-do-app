@@ -2,6 +2,7 @@ package vn.com.anhemsoftware.license_app.controller;
 
 import lombok.RequiredArgsConstructor;
 import vn.com.anhemsoftware.license_app.entity.Task;
+import vn.com.anhemsoftware.license_app.payload.task.request.FavoriteTaskRequest;
 import vn.com.anhemsoftware.license_app.service.S3Service;
 import vn.com.anhemsoftware.license_app.service.TaskService;
 
@@ -81,6 +82,28 @@ public class TaskController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(dueTasks);
+    }
+
+    @GetMapping("/favorites")
+    public ResponseEntity<List<Task>> getFavoriteTasks() {
+        List<Task> favoriteTasks = taskService.getFavoriteTasks();
+        if (favoriteTasks == null || favoriteTasks.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(favoriteTasks);
+    }
+
+    @PatchMapping("/{id}/favorite")
+    public ResponseEntity<Task> setTaskFavorite(
+            @PathVariable Long id,
+            @Valid @RequestBody FavoriteTaskRequest request) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+        }
+
+        Task updatedTask = taskService.setFavorite(id, request.getIsFavorite());
+
+        return ResponseEntity.ok(updatedTask);
     }
 
     /**

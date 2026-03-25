@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:10",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:22",
     "containerDefinitions": [
         {
             "name": "mysql-db",
@@ -152,7 +152,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:latest",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:8a93bfc57ac58695373abea8519b96f35ce2c049",
             "cpu": 512,
             "memory": 1024,
             "portMappings": [
@@ -170,6 +170,10 @@
                     "value": "ta84578@gmail.com"
                 },
                 {
+                    "name": "AWS_ACCESS_KEY_ID",
+                    "value": "AKIAUJEM2GRJ656I7E5N"
+                },
+                {
                     "name": "SPRING_DATASOURCE_PASSWORD",
                     "value": "root"
                 },
@@ -182,12 +186,24 @@
                     "value": "smtp.gmail.com"
                 },
                 {
+                    "name": "AWS_SECRET_ACCESS_KEY",
+                    "value": "uK3uK1cwuo+jRgKcd0lX8RDpXCg8JvdcjlXf/vWx"
+                },
+                {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "prod"
+                },
+                {
                     "name": "SPRING_DATASOURCE_USERNAME",
                     "value": "root"
                 },
                 {
                     "name": "SPRING_RABBITMQ_HOST",
                     "value": "localhost"
+                },
+                {
+                    "name": "AWS_S3_BUCKET_NAME",
+                    "value": "amz-s3-demo-294500578387"
                 },
                 {
                     "name": "SPRING_DATA_REDIS_HOST",
@@ -203,7 +219,7 @@
             "secrets": [
                 {
                     "name": "SPRING_MAIL_PASSWORD",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl"
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:SPRING_MAIL_PASSWORD::"
                 }
             ],
             "dependsOn": [
@@ -236,7 +252,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 10,
+    "revision": 22,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -277,8 +293,8 @@
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "FARGATE",
-        "MANAGED_INSTANCES"
+        "MANAGED_INSTANCES",
+        "FARGATE"
     ],
     "requiresCompatibilities": [
         "FARGATE"
@@ -289,7 +305,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-03-16T08:18:40.286Z",
+    "registeredAt": "2026-03-24T06:18:33.038Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

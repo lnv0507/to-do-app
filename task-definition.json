@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:35",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:37",
     "containerDefinitions": [
         {
             "name": "redis-server",
@@ -104,7 +104,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:6c2608a24c8511f3ceb39a0403a0e35dd17f8861",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:afd17cc77ca682c7848b81988476dd10c2ae48b1",
             "cpu": 1024,
             "memory": 1024,
             "portMappings": [
@@ -122,24 +122,12 @@
                     "value": "ta84578@gmail.com"
                 },
                 {
-                    "name": "AWS_ACCESS_KEY_ID",
-                    "value": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:AWS_ACCESS_KEY_ID::"
-                },
-                {
-                    "name": "SPRING_DATASOURCE_PASSWORD",
-                    "value": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:SPRING_DATASOURCE_PASSWORD::"
-                },
-                {
                     "name": "SPRING_DATASOURCE_URL",
                     "value": "jdbc:mysql://lisence-app-database.cfk8ig6c8kou.ap-southeast-1.rds.amazonaws.com:3306/anhemsoftware_license_app?createDatabaseIfNotExist=true"
                 },
                 {
                     "name": "SPRING_MAIL_HOST",
                     "value": "smtp.gmail.com"
-                },
-                {
-                    "name": "AWS_SECRET_ACCESS_KEY",
-                    "value": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:AWS_SECRET_ACCESS_KEY::"
                 },
                 {
                     "name": "SPRING_PROFILES_ACTIVE",
@@ -170,8 +158,20 @@
             "volumesFrom": [],
             "secrets": [
                 {
+                    "name": "AWS_ACCESS_KEY_ID",
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:AWS_ACCESS_KEY_ID::"
+                },
+                {
+                    "name": "AWS_SECRET_ACCESS_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:AWS_SECRET_ACCESS_KEY::"
+                },
+                {
                     "name": "OPENAI_API_KEY",
                     "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:OPENAI_API_KEY::"
+                },
+                {
+                    "name": "SPRING_DATASOURCE_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:SPRING_DATASOURCE_PASSWORD::"
                 },
                 {
                     "name": "SPRING_MAIL_PASSWORD",
@@ -204,7 +204,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 35,
+    "revision": 37,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -245,8 +245,8 @@
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "FARGATE",
-        "MANAGED_INSTANCES"
+        "MANAGED_INSTANCES",
+        "FARGATE"
     ],
     "requiresCompatibilities": [
         "FARGATE"
@@ -257,7 +257,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-04-06T11:19:59.525Z",
+    "registeredAt": "2026-04-06T11:41:54.944Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

@@ -64,7 +64,7 @@ class TaskControllerTest {
         Task task = Task.builder().id(1L).title("Write tests").priority(Priority.HIGH).favorite(true).build();
         when(taskService.getAllTasks()).thenReturn(List.of(task));
 
-        mockMvc.perform(get("/api/tasks"))
+        mockMvc.perform(get("/api/v1/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].title").value("Write tests"))
@@ -76,7 +76,7 @@ class TaskControllerTest {
     void getAllTasks_returnsNoContentWhenListIsEmpty() throws Exception {
         when(taskService.getAllTasks()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/tasks"))
+        mockMvc.perform(get("/api/v1/tasks"))
                 .andExpect(status().isNoContent());
     }
 
@@ -84,7 +84,7 @@ class TaskControllerTest {
     void getAllTasks_returnsNoContentWhenServiceReturnsNull() throws Exception {
         when(taskService.getAllTasks()).thenReturn(null);
 
-        mockMvc.perform(get("/api/tasks"))
+        mockMvc.perform(get("/api/v1/tasks"))
                 .andExpect(status().isNoContent());
     }
 
@@ -95,7 +95,7 @@ class TaskControllerTest {
                 Task task = Task.builder().id(1L).title("My Task").completed(false).favorite(false).build();
         when(taskService.getTaskById(1L)).thenReturn(task);
 
-        mockMvc.perform(get("/api/tasks/1"))
+        mockMvc.perform(get("/api/v1/tasks/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("My Task"))
@@ -106,15 +106,15 @@ class TaskControllerTest {
     @Test
     void getTaskById_returns404WhenNotFound() throws Exception {
         when(taskService.getTaskById(99L))
-                .thenThrow(new TaskNotFoundException("Không tìm thấy Task với id: 99"));
+                .thenThrow(new TaskNotFoundException("Task not found with id: 99"));
 
-        mockMvc.perform(get("/api/tasks/99"))
+        mockMvc.perform(get("/api/v1/tasks/99"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void getTaskById_returns400WhenIdIsZero() throws Exception {
-        mockMvc.perform(get("/api/tasks/0"))
+        mockMvc.perform(get("/api/v1/tasks/0"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(taskService);
@@ -122,7 +122,7 @@ class TaskControllerTest {
 
     @Test
     void getTaskById_returns400WhenIdIsNegative() throws Exception {
-        mockMvc.perform(get("/api/tasks/-5"))
+        mockMvc.perform(get("/api/v1/tasks/-5"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(taskService);
@@ -136,7 +136,7 @@ class TaskControllerTest {
         Task saved = Task.builder().id(2L).title("New Task").description("Some description").priority(Priority.MEDIUM).build();
         when(taskService.createTask(any(Task.class))).thenReturn(saved);
 
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/api/v1/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -151,7 +151,7 @@ class TaskControllerTest {
     void createTask_returns400WhenTitleIsBlank() throws Exception {
         Task input = Task.builder().title("").description("desc").build();
 
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/api/v1/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -164,7 +164,7 @@ class TaskControllerTest {
         // title field omitted → @NotBlank triggers
         String body = "{\"description\":\"no title here\"}";
 
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/api/v1/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest());
@@ -177,7 +177,7 @@ class TaskControllerTest {
         String longTitle = "A".repeat(256);
         Task input = Task.builder().title(longTitle).build();
 
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/api/v1/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -193,7 +193,7 @@ class TaskControllerTest {
         Task result = Task.builder().id(1L).title("Updated Title").description("Updated Desc").completed(true).build();
         when(taskService.updateTask(eq(1L), any(Task.class))).thenReturn(result);
 
-        mockMvc.perform(put("/api/tasks/1")
+        mockMvc.perform(put("/api/v1/tasks/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -206,9 +206,9 @@ class TaskControllerTest {
     void updateTask_returns404WhenNotFound() throws Exception {
         Task input = Task.builder().title("Updated Title").build();
         when(taskService.updateTask(eq(99L), any(Task.class)))
-                .thenThrow(new TaskNotFoundException("Không tìm thấy Task với id: 99"));
+                .thenThrow(new TaskNotFoundException("Task not found with id: 99"));
 
-        mockMvc.perform(put("/api/tasks/99")
+        mockMvc.perform(put("/api/v1/tasks/99")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isNotFound());
@@ -218,7 +218,7 @@ class TaskControllerTest {
     void updateTask_returns400WhenIdIsZero() throws Exception {
         Task input = Task.builder().title("Some Title").build();
 
-        mockMvc.perform(put("/api/tasks/0")
+        mockMvc.perform(put("/api/v1/tasks/0")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -230,7 +230,7 @@ class TaskControllerTest {
     void updateTask_returns400WhenIdIsNegative() throws Exception {
         Task input = Task.builder().title("Some Title").build();
 
-        mockMvc.perform(put("/api/tasks/-1")
+        mockMvc.perform(put("/api/v1/tasks/-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -243,7 +243,7 @@ class TaskControllerTest {
         // title present but blank → controller throws IllegalArgumentException
         Task input = Task.builder().title("").build();
 
-        mockMvc.perform(put("/api/tasks/1")
+        mockMvc.perform(put("/api/v1/tasks/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -258,7 +258,7 @@ class TaskControllerTest {
                 Task task = Task.builder().id(1L).title("Fav task").favorite(true).build();
                 when(taskService.getFavoriteTasks()).thenReturn(List.of(task));
 
-                mockMvc.perform(get("/api/tasks/favorites"))
+                mockMvc.perform(get("/api/v1/tasks/favorites"))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$[0].id").value(1))
                         .andExpect(jsonPath("$[0].isFavorite").value(true));
@@ -268,7 +268,7 @@ class TaskControllerTest {
         void getFavoriteTasks_returnsNoContentWhenEmpty() throws Exception {
                 when(taskService.getFavoriteTasks()).thenReturn(Collections.emptyList());
 
-                mockMvc.perform(get("/api/tasks/favorites"))
+                mockMvc.perform(get("/api/v1/tasks/favorites"))
                                 .andExpect(status().isNoContent());
         }
 
@@ -279,7 +279,7 @@ class TaskControllerTest {
                 Task updated = Task.builder().id(1L).title("Task").favorite(true).build();
                 when(taskService.setFavorite(1L, true)).thenReturn(updated);
 
-                mockMvc.perform(patch("/api/tasks/1/favorite")
+                mockMvc.perform(patch("/api/v1/tasks/1/favorite")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"isFavorite\":true}"))
                                 .andExpect(status().isOk())
@@ -291,7 +291,7 @@ class TaskControllerTest {
 
         @Test
             void setTaskFavorite_returns400WhenBodyMissingIsFavorite() throws Exception {
-                mockMvc.perform(patch("/api/tasks/1/favorite")
+                mockMvc.perform(patch("/api/v1/tasks/1/favorite")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{}"))
                         .andExpect(status().isBadRequest());
@@ -301,7 +301,7 @@ class TaskControllerTest {
 
         @Test
         void setTaskFavorite_returns400WhenIdIsInvalid() throws Exception {
-                mockMvc.perform(patch("/api/tasks/0/favorite")
+                mockMvc.perform(patch("/api/v1/tasks/0/favorite")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"isFavorite\":true}"))
                                 .andExpect(status().isBadRequest());
@@ -315,7 +315,7 @@ class TaskControllerTest {
     void deleteTask_returnsNoContent() throws Exception {
         doNothing().when(taskService).deleteTask(1L);
 
-        mockMvc.perform(delete("/api/tasks/1"))
+        mockMvc.perform(delete("/api/v1/tasks/1"))
                 .andExpect(status().isNoContent());
 
         verify(taskService).deleteTask(1L);
@@ -323,16 +323,16 @@ class TaskControllerTest {
 
     @Test
     void deleteTask_returns404WhenNotFound() throws Exception {
-        doThrow(new TaskNotFoundException("Không tìm thấy Task với id: 99"))
+        doThrow(new TaskNotFoundException("Task not found with id: 99"))
                 .when(taskService).deleteTask(99L);
 
-        mockMvc.perform(delete("/api/tasks/99"))
+        mockMvc.perform(delete("/api/v1/tasks/99"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void deleteTask_returns400WhenIdIsZero() throws Exception {
-        mockMvc.perform(delete("/api/tasks/0"))
+        mockMvc.perform(delete("/api/v1/tasks/0"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(taskService);
@@ -340,7 +340,7 @@ class TaskControllerTest {
 
     @Test
     void deleteTask_returns400WhenIdIsNegative() throws Exception {
-        mockMvc.perform(delete("/api/tasks/-3"))
+        mockMvc.perform(delete("/api/v1/tasks/-3"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(taskService);
@@ -361,7 +361,7 @@ class TaskControllerTest {
                                 "fake-image-content".getBytes()
                 );
 
-                mockMvc.perform(multipart("/api/tasks/1/image").file(file))
+                mockMvc.perform(multipart("/api/v1/tasks/1/image").file(file))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.imageUrl").value("https://s3/new.png"));
 
@@ -378,7 +378,7 @@ class TaskControllerTest {
                 Task existingTask = Task.builder().id(1L).title("Task with image").imageUrl("https://s3/image.png").build();
                 when(taskService.getTaskById(1L)).thenReturn(existingTask);
 
-                mockMvc.perform(delete("/api/tasks/1/image"))
+                mockMvc.perform(delete("/api/v1/tasks/1/image"))
                                 .andExpect(status().isNoContent());
 
                 verify(taskService).getTaskById(1L);

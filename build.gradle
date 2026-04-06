@@ -21,11 +21,19 @@ configurations {
 	}
 }
 
+
 repositories {
-	mavenCentral()
+    mavenCentral()
+    // Required repository for accessing Spring AI Milestone/Snapshot versions
+    maven { url 'https://repo.spring.io' }
 }
 
+
 dependencies {
+	implementation platform("org.springframework.ai:spring-ai-bom:1.0.0")
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
+
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// JJWT API

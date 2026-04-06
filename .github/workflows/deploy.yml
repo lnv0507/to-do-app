@@ -2,7 +2,7 @@ name: Deploy Spring Boot to Amazon ECS
 
 on:
   push:
-    branches: ["main", "feat/cicd"]
+    branches: ["main", "feat/**"]
 
 env:
   AWS_REGION: ap-southeast-1

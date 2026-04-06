@@ -1,12 +1,12 @@
 package vn.com.anhemsoftware.license_app.payload.auth.internal;
 
 /**
- * Dữ liệu login đang chờ xác thực OTP (Scenario HIGH).
- * Lưu trong Redis với key "PENDING_LOGIN:<verificationToken>", TTL 10 phút.
+ * Login data pending OTP verification (Scenario HIGH).
+ * Stored in Redis with key "PENDING_LOGIN:<verificationToken>", TTL 10 minutes.
  */
 public record PendingLoginCache(
-        String email,
-        String otp,
-        String ip,
-        String userAgent) {
+                String email,
+                String otp,
+                String ip,
+                String userAgent) {
 }

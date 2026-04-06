@@ -1,54 +1,6 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:22",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:28",
     "containerDefinitions": [
-        {
-            "name": "mysql-db",
-            "image": "public.ecr.aws/docker/library/mysql:8.0-debian",
-            "cpu": 256,
-            "memory": 1024,
-            "portMappings": [
-                {
-                    "name": "mysql-db-3306-tcp",
-                    "containerPort": 3306,
-                    "hostPort": 3306,
-                    "protocol": "tcp"
-                }
-            ],
-            "essential": true,
-            "environment": [
-                {
-                    "name": "MYSQL_DATABASE",
-                    "value": "anhemsoftware_license_app"
-                },
-                {
-                    "name": "MYSQL_ROOT_PASSWORD",
-                    "value": "root"
-                }
-            ],
-            "mountPoints": [],
-            "volumesFrom": [],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/license-app-task",
-                    "awslogs-create-group": "true",
-                    "awslogs-region": "ap-southeast-1",
-                    "awslogs-stream-prefix": "mysql-db"
-                },
-                "secretOptions": []
-            },
-            "healthCheck": {
-                "command": [
-                    "CMD-SHELL",
-                    "mysqladmin ping -h localhost -u root -proot || exit 1"
-                ],
-                "interval": 15,
-                "timeout": 5,
-                "retries": 10,
-                "startPeriod": 30
-            },
-            "systemControls": []
-        },
         {
             "name": "redis-server",
             "image": "public.ecr.aws/docker/library/redis:alpine",
@@ -152,7 +104,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:8a93bfc57ac58695373abea8519b96f35ce2c049",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:c2184df7ccda82370af32eb2cbc84c15ff8034fc",
             "cpu": 512,
             "memory": 1024,
             "portMappings": [
@@ -163,7 +115,7 @@
                     "protocol": "tcp"
                 }
             ],
-            "essential": false,
+            "essential": true,
             "environment": [
                 {
                     "name": "SPRING_MAIL_USERNAME",
@@ -171,7 +123,7 @@
                 },
                 {
                     "name": "AWS_ACCESS_KEY_ID",
-                    "value": "AKIAUJEM2GRJ656I7E5N"
+                    "value": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:AWS_ACCESS_KEY_ID::"
                 },
                 {
                     "name": "SPRING_DATASOURCE_PASSWORD",
@@ -187,7 +139,7 @@
                 },
                 {
                     "name": "AWS_SECRET_ACCESS_KEY",
-                    "value": "uK3uK1cwuo+jRgKcd0lX8RDpXCg8JvdcjlXf/vWx"
+                    "value": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:AWS_SECRET_ACCESS_KEY::"
                 },
                 {
                     "name": "SPRING_PROFILES_ACTIVE",
@@ -218,15 +170,15 @@
             "volumesFrom": [],
             "secrets": [
                 {
+                    "name": "OPENAI_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:OPENAI_API_KEY::"
+                },
+                {
                     "name": "SPRING_MAIL_PASSWORD",
                     "valueFrom": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:SPRING_MAIL_PASSWORD::"
                 }
             ],
             "dependsOn": [
-                {
-                    "containerName": "mysql-db",
-                    "condition": "HEALTHY"
-                },
                 {
                     "containerName": "redis-server",
                     "condition": "HEALTHY"
@@ -252,7 +204,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 22,
+    "revision": 28,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -293,8 +245,8 @@
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "MANAGED_INSTANCES",
-        "FARGATE"
+        "FARGATE",
+        "MANAGED_INSTANCES"
     ],
     "requiresCompatibilities": [
         "FARGATE"
@@ -305,7 +257,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-03-24T06:18:33.038Z",
+    "registeredAt": "2026-04-06T08:31:52.655Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

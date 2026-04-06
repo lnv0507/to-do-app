@@ -26,3 +26,6 @@ src/main/resources/application-dev.properties
 Thumbs.db
 bootRun_error.log
 bootRun.log
+
+# Plan documentation
+plan/

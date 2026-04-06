@@ -127,7 +127,7 @@
                 },
                 {
                     "name": "SPRING_DATASOURCE_PASSWORD",
-                    "value": "root"
+                    "value": "AdminPass2026!"
                 },
                 {
                     "name": "SPRING_DATASOURCE_URL",

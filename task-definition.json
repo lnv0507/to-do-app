@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:28",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:33",
     "containerDefinitions": [
         {
             "name": "redis-server",
@@ -104,7 +104,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:c2184df7ccda82370af32eb2cbc84c15ff8034fc",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:722580301840af7ff9db3e09345d33c574415e97",
             "cpu": 512,
             "memory": 1024,
             "portMappings": [
@@ -127,7 +127,7 @@
                 },
                 {
                     "name": "SPRING_DATASOURCE_PASSWORD",
-                    "value": "AdminPass2026!"
+                    "value": "arn:aws:secretsmanager:ap-southeast-1:294500578387:secret:prod/license-app/mail-password-yo9djl:SPRING_DATASOURCE_PASSWORD::"
                 },
                 {
                     "name": "SPRING_DATASOURCE_URL",
@@ -204,7 +204,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 28,
+    "revision": 33,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -245,8 +245,8 @@
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "FARGATE",
-        "MANAGED_INSTANCES"
+        "MANAGED_INSTANCES",
+        "FARGATE"
     ],
     "requiresCompatibilities": [
         "FARGATE"
@@ -257,7 +257,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-04-06T08:31:52.655Z",
+    "registeredAt": "2026-04-06T11:01:59.419Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

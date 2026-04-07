@@ -22,7 +22,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Endpoint để client connect vào WebSocket
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*") // Cho phép CORS từ mọi nguồn (có thể điều chỉnh)
+                .setAllowedOriginPatterns("https://app.practicehandler.io.vn") // Cho phép CORS từ mọi nguồn (có thể
+                                                                               // điều chỉnh)
                 .withSockJS(); // Fallback cho browser không support WebSocket
     }
 }

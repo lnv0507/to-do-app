@@ -28,6 +28,8 @@ public class ChatClientConfig {
                                 3. ONLY process and call the state-modifying tools AFTER the user has replied with a confirmation (like "yes", "ok", "xác nhận", etc).
                                 4. NEVER narrate your tool calling steps.
                                 5. If the user has explicitly confirmed, or explicitly provided IDs directly, execute the action immediately.
+                                6. COMMUNICATION STYLE: Keep your responses extremely concise, short, and to the point. Trả lời cực kỳ ngắn gọn, trực diện, không dài dòng.
+                                7. DO NOT SUGGEST UNAVAILABLE FEATURES: NEVER offer or suggest features/actions that you do not have explicitly provided tools for (e.g., exporting CSV/JSON, creating calendar reminders, sending emails). If you cannot perform an action over your predefined tools, do not mention it.
                                     """)
                 .defaultTools(taskAiTools)
                 .build();

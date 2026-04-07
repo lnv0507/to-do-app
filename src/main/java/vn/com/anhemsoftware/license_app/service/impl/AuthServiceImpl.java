@@ -35,22 +35,38 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     // ─── Redis key prefixes ────────────────────────────────────────────────────
-    private static final String REDIS_REFRESH = "REFRESH:";
-    private static final String REDIS_USER_SESSIONS = "USER_SESSIONS:";
-    private static final String REDIS_ACTION_TOKEN = "ACTION_TOKEN:";
+    @Value("${auth.redis.prefix.refresh:REFRESH:}")
+    private String REDIS_REFRESH;
+
+    @Value("${auth.redis.prefix.user-sessions:USER_SESSIONS:}")
+    private String REDIS_USER_SESSIONS;
+
+    @Value("${auth.redis.prefix.action-token:ACTION_TOKEN:}")
+    private String REDIS_ACTION_TOKEN;
+
     /** Pending HIGH-risk login chờ OTP — TTL 10 phút */
-    private static final String REDIS_PENDING_LOGIN = "PENDING_LOGIN:";
+    @Value("${auth.redis.prefix.pending-login:PENDING_LOGIN:}")
+    private String REDIS_PENDING_LOGIN;
 
     // ─── TTL constants ─────────────────────────────────────────────────────────
-    private static final long REFRESH_TTL_DAYS = 7;
-    private static final long DEVICE_COOKIE_DAYS = 365 * 5L;
-    private static final long ACTION_TOKEN_HOURS = 24;
-    private static final long PENDING_LOGIN_MINUTES = 10;
+    @Value("${auth.ttl.refresh-days:7}")
+    private long REFRESH_TTL_DAYS;
+
+    @Value("${auth.ttl.device-cookie-days:1825}")
+    private long DEVICE_COOKIE_DAYS;
+
+    @Value("${auth.ttl.action-token-hours:24}")
+    private long ACTION_TOKEN_HOURS;
+
+    @Value("${auth.ttl.pending-login-minutes:10}")
+    private long PENDING_LOGIN_MINUTES;
 
     // ─── Dependencies ──────────────────────────────────────────────────────────
     private final UserRepository userRepository;

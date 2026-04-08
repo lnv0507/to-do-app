@@ -10,8 +10,12 @@ import vn.com.anhemsoftware.license_app.payload.auth.request.SignInRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignUpRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.VerifyDeviceRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.VerifyOtpRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.request.ChangePasswordRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.request.ResetPasswordRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.response.SignUpResponse;
 import vn.com.anhemsoftware.license_app.service.AuthService;
+import java.security.Principal;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,15 +59,18 @@ public class AuthController {
         return authService.verifyDevice(request, response, verifyDeviceRequest);
     }
 
-    /**
-     * "This is not me" — link in MEDIUM risk email.
-     * No auth required — ActionToken is proof.
-     */
-    @GetMapping("/report-device")
-    public ResponseEntity<String> reportDevice(@RequestParam String token) throws Exception {
-        authService.reportDevice(token);
-        return ResponseEntity.ok(
-                "✅ Login session from an unknown device has been revoked. " +
-                        "If you are concerned, please change your password immediately.");
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(Principal principal, @Valid @RequestBody ChangePasswordRequest request) throws Exception {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Vui lòng đăng nhập.");
+        }
+        authService.changePassword(principal.getName(), request);
+        return ResponseEntity.ok("✅ Mật khẩu thay đổi thành công. Bạn đã được đăng xuất an toàn khỏi các thiết bị khác.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) throws Exception {
+        authService.resetPassword(request);
+        return ResponseEntity.ok("✅ Mật khẩu thiết lập lại thành công. Bạn đã được bảo mật an toàn trên tất cả các nền tảng.");
     }
 }

@@ -2,6 +2,8 @@ package vn.com.anhemsoftware.license_app.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import vn.com.anhemsoftware.license_app.payload.auth.request.ChangePasswordRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.request.ResetPasswordRequest;
 import org.springframework.http.ResponseEntity;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignInRequest;
 import vn.com.anhemsoftware.license_app.payload.auth.request.SignUpRequest;
@@ -23,11 +25,9 @@ public interface AuthService {
 
         void logoutAllExcept(Long userId, String currentJti) throws Exception;
 
-        /**
-         * Được gọi khi user click "Đây không phải là tôi" trong email cảnh báo.
-         * Revoke session của thiết bị lạ đó khỏi Redis.
-         */
-        void reportDevice(String actionToken) throws Exception;
+        void changePassword(String email, ChangePasswordRequest request) throws Exception;
+
+        void resetPassword(ResetPasswordRequest request) throws Exception;
 
         /**
          * Scenario HIGH: Xác thực OTP sau khi bị block.

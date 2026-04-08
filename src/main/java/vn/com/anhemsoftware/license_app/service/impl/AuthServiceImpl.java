@@ -26,8 +26,11 @@ import vn.com.anhemsoftware.license_app.repository.UserRepository;
 import vn.com.anhemsoftware.license_app.service.AuthService;
 import vn.com.anhemsoftware.license_app.service.EmailService;
 import vn.com.anhemsoftware.license_app.service.JWTService;
+import vn.com.anhemsoftware.license_app.payload.auth.request.ChangePasswordRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.request.ResetPasswordRequest;
+import vn.com.anhemsoftware.license_app.payload.auth.internal.GeoLocation;
+import vn.com.anhemsoftware.license_app.service.GeoLocationService;
 import vn.com.anhemsoftware.license_app.util.CookieUtil;
-import vn.com.anhemsoftware.license_app.util.IpSubnetUtil;
 import vn.com.anhemsoftware.license_app.util.OTPGenerator;
 import vn.com.anhemsoftware.license_app.util.RequestUtils;
 
@@ -48,8 +51,8 @@ public class AuthServiceImpl implements AuthService {
     @Value("${auth.redis.prefix.user-sessions:USER_SESSIONS:}")
     private String REDIS_USER_SESSIONS;
 
-    @Value("${auth.redis.prefix.action-token:ACTION_TOKEN:}")
-    private String REDIS_ACTION_TOKEN;
+    @Value("${auth.redis.prefix.reset-password:RESET_PASS:}")
+    private String REDIS_RESET_PASSWORD;
 
     /** Pending HIGH-risk login chờ OTP — TTL 10 phút */
     @Value("${auth.redis.prefix.pending-login:PENDING_LOGIN:}")
@@ -62,9 +65,6 @@ public class AuthServiceImpl implements AuthService {
     @Value("${auth.ttl.device-cookie-days:1825}")
     private long DEVICE_COOKIE_DAYS;
 
-    @Value("${auth.ttl.action-token-hours:24}")
-    private long ACTION_TOKEN_HOURS;
-
     @Value("${auth.ttl.pending-login-minutes:10}")
     private long PENDING_LOGIN_MINUTES;
 
@@ -76,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final UserDeviceRepository userDeviceRepository;
+    private final GeoLocationService geoLocationService;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // SIGN UP
@@ -289,30 +290,48 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // REPORT DEVICE — "Đây không phải là tôi"
+    // CHANGE PASSWORD & RESET PASSWORD
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
-    public void reportDevice(String actionToken) throws Exception {
-        String deviceId = (String) redisTemplate.opsForValue().get(REDIS_ACTION_TOKEN + actionToken);
-        if (deviceId == null) {
-            throw new Exception("Token không tồn tại hoặc đã hết hạn.");
-        }
-        redisTemplate.delete(REDIS_ACTION_TOKEN + actionToken);
+    public void changePassword(String email, ChangePasswordRequest request) throws Exception {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new Exception("User not found"));
 
-        UserDevice device = userDeviceRepository.findByDeviceId(deviceId)
-                .orElseThrow(() -> new Exception("Không tìm thấy thiết bị."));
-
-        String jti = device.getSessionJti();
-        Long userId = device.getUser().getId();
-        if (jti != null) {
-            redisTemplate.delete(REDIS_REFRESH + jti);
-            redisTemplate.opsForHash().delete(REDIS_USER_SESSIONS + userId, jti);
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu cũ không chính xác.");
         }
-        // Đặt lại isTrusted=false → lần đăng nhập tiếp theo từ thiết bị này
-        // sẽ bị đánh giá là MEDIUM (nếu IP quen) hoặc HIGH (nếu IP lạ) và gửi mail lại
-        device.setIsTrusted(false);
-        userDeviceRepository.save(device);
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        // Lấy jti hiện tại từ context (có thể pass từ JWT lọc trên Authentication, nhưng ở đây ta có thể dùng ContextHolder.
+        // Tạm thời để đơn giản, gọi reset tất cả phiên ngoại trừ hiện tại (nếu có context jti).
+        // Nếu không có jti hiện tại, log out TẤT CẢ (Global Revoke).
+        logoutAllExcept(user.getId(), "DUMMY_JTI_TO_LOGOUT_ALL");
+
+        emailService.sendEmail(user.getEmail(), "Mật khẩu Cập nhật Thành công", "Mật khẩu của bạn vừa được thay đổi. Nếu không phải bạn, hãy liên hệ hỗ trợ ngay.");
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) throws Exception {
+        String email = (String) redisTemplate.opsForValue().get(REDIS_RESET_PASSWORD + request.token());
+        if (email == null) {
+            throw new Exception("Token đổi mật khẩu không hợp lệ hoặc đã hết hạn.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new Exception("User not found"));
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        redisTemplate.delete(REDIS_RESET_PASSWORD + request.token());
+
+        // Global Revoke tất cả thiết bị
+        logoutAllExcept(user.getId(), "DUMMY_JTI_TO_LOGOUT_ALL");
+
+        emailService.sendEmail(user.getEmail(), "Mật khẩu Cập nhật Thành công", "Mật khẩu của bạn đã được đặt lại thành công sau khi báo cáo rủi ro.");
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -324,47 +343,49 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * Tính risk level dựa trên device token + subnet.
-     * NONE : isTrusted=true + cùng subnet → vào thẳng
-     * LOW : isTrusted=true + khác subnet → vào thẳng (reset modem OK)
-     * MEDIUM : device lạ + cùng subnet → vào + warning email
-     * HIGH : device lạ + khác subnet → CHẶN + OTP
+     * Tính risk level dựa trên Device cookie và GeoLocation (Vị trí).
+     * Ma trận rủi ro:
+     * - Cũ (Tin cậy) + Vị trí Quen: NONE / LOW
+     * - Cũ (Tin cậy) + Vị trí Mới (Impossible travel): CRITICAL (tương đương HIGH nhưng lý do khác)
+     * - Mới (Không cookie) + Vị trí Quen: MEDIUM (Mua máy mới, dùng 4G)
+     * - Mới (Không cookie) + Vị trí Khác: HIGH (Bị lộ pass, hacker ở xa)
      */
     private RiskLevel evaluateRisk(User userDB, HttpServletRequest request) {
         String deviceIdCookie = CookieUtil.read(request, "device_id");
         String currentIp = RequestUtils.getClientIp(request);
+        GeoLocation currentGeo = geoLocationService.getLocation(currentIp);
 
-        // ─── Case: có device cookie ────────────────────────────────────────────
+        // ─── Case: có device cookie (Thiết bị cũ) ──────────────────────────────
         if (deviceIdCookie != null) {
             UserDevice existing = userDeviceRepository
                     .findByUserIdAndDeviceId(userDB.getId(), deviceIdCookie)
                     .orElse(null);
 
             if (existing != null) {
+                GeoLocation existingGeo = geoLocationService.getLocation(existing.getLastIp());
+                boolean isSameLocation = currentGeo.isSameLocation(existingGeo);
+
                 if (Boolean.TRUE.equals(existing.getIsTrusted())) {
-                    // NONE: device tin cậy + cùng subnet
-                    // LOW : device tin cậy + IP đổi (reset modem)
-                    return IpSubnetUtil.isSameSubnet(currentIp, existing.getLastIp())
-                            ? RiskLevel.NONE
-                            : RiskLevel.LOW;
+                    // Cũ + Quen
+                    if (isSameLocation) return RiskLevel.NONE;
+                    // Cũ + Lạ = CRITICAL (Impossible travel có thể xảy ra)
+                    return RiskLevel.HIGH; 
                 }
-                // isTrusted=false → đã biết nhưng chưa tin (bị report trước đó)
-                return IpSubnetUtil.isSameSubnet(currentIp, existing.getLastIp())
-                        ? RiskLevel.MEDIUM
-                        : RiskLevel.HIGH;
+                // isTrusted=false → Cookie bị report xấu
+                return isSameLocation ? RiskLevel.MEDIUM : RiskLevel.HIGH;
             }
-            // Cookie có nhưng không tìm thấy trong DB → coi như thiết bị mới
         }
 
-        // ─── Case: không có cookie (new device) hoặc cookie không hợp lệ ───────
-        // So IP với TẤT CẢ các thiết bị đã biết của user
-        // → Cùng subnet với bất kỳ device nào: MEDIUM (IP quen, device mới)
-        // → Không khớp subnet nào: HIGH (IP lạ + device lạ)
-        boolean ipKnown = userDeviceRepository.findAllByUserId(userDB.getId())
+        // ─── Case: không có cookie (Thiết bị mới) ─────────────────────────────
+        // So vị trí với một trong các thiết bị đã biết của user
+        boolean locationKnown = userDeviceRepository.findAllByUserId(userDB.getId())
                 .stream()
-                .anyMatch(d -> IpSubnetUtil.isSameSubnet(currentIp, d.getLastIp()));
+                .anyMatch(d -> {
+                    GeoLocation savedGeo = geoLocationService.getLocation(d.getLastIp());
+                    return currentGeo.isSameLocation(savedGeo);
+                });
 
-        return ipKnown ? RiskLevel.MEDIUM : RiskLevel.HIGH;
+        return locationKnown ? RiskLevel.MEDIUM : RiskLevel.HIGH;
     }
 
     /**
@@ -412,28 +433,28 @@ public class AuthServiceImpl implements AuthService {
         userDeviceRepository.save(newDevice);
         setDeviceIdCookie(response, newDeviceId, TimeUnit.DAYS.toSeconds(DEVICE_COOKIE_DAYS));
 
-        // ActionToken 24h cho link "Đây không phải là tôi"
-        String actionToken = UUID.randomUUID().toString();
+        // Token 2h cho link đổi mật khẩu
+        String resetToken = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set(
-                REDIS_ACTION_TOKEN + actionToken, newDeviceId, ACTION_TOKEN_HOURS, TimeUnit.HOURS);
+                REDIS_RESET_PASSWORD + resetToken, userDB.getEmail(), 2, TimeUnit.HOURS);
 
-        String reportLink = "http://localhost:8080/api/v1/auth/report-device?token=" + actionToken;
+        String resetLink = "http://localhost:3000/reset-password?token=" + resetToken;
         String emailBody = """
-                Hệ thống phát hiện đăng nhập từ thiết bị không tin cậy vào tài khoản của bạn.
+                Hệ thống phát hiện đăng nhập từ thiết bị mới.
 
                 🖥  Thiết bị : %s
                 🌐  Địa chỉ IP: %s
-                ⚠️  Mức rủi ro: MEDIUM (IP quen nhưng thiết bị chưa tin cậy)
 
-                Nếu ĐÂY KHÔNG PHẢI LÀ BẠN, nhấn link để thu hồi phiên đăng nhập ngay:
+                Nếu ĐÂY LÀ BẠN, hãy phớt lờ email này.
+                Nếu ĐÂY KHÔNG PHẢI LÀ BẠN, vui lòng BẤM VÀO ĐÂY ĐỂ ĐỔI MẬT KHẨU ngay lập tức. Sau khi đổi mật khẩu, hệ thống sẽ đăng xuất tài khoản của bạn khỏi tất cả các thiết bị.
                 👉 %s
 
-                Link có hiệu lực trong 24 giờ.
-                """.formatted(currentUa, currentIp, reportLink);
+                Link có hiệu lực trong 2 giờ.
+                """.formatted(currentUa, currentIp, resetLink);
 
         emailService.sendEmail(
                 userDB.getEmail(),
-                "⚠️ Cảnh báo: Đăng nhập từ thiết bị chưa tin cậy",
+                "Cảnh báo bảo mật: Thay đổi mật khẩu ngay nếu đây không phải bạn",
                 emailBody);
     }
 

@@ -26,13 +26,10 @@ public class TaskNotificationScheduler {
     public void checkAndNotifyDueTasks() {
         try {
             List<Task> dueTasks = taskService.getDueTasks();
-            
+
             if (!dueTasks.isEmpty()) {
-                log.info("Tìm thấy {} task đến hạn", dueTasks.size());
-                
                 // Gửi danh sách task đến tất cả client đang subscribe /topic/tasks/due
                 messagingTemplate.convertAndSend("/topic/tasks/due", dueTasks);
-                log.info("Đã gửi thông báo qua WebSocket: {} tasks", dueTasks.size());
             }
         } catch (Exception e) {
             log.error("Lỗi khi kiểm tra task đến hạn", e);

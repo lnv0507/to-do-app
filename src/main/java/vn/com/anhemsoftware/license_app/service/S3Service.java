@@ -5,18 +5,18 @@ import org.springframework.web.multipart.MultipartFile;
 public interface S3Service {
 
     /**
-     * Upload file lên S3 và trả về URL public của file.
+     * Upload file to S3 and return the public URL of the file.
      *
-     * @param file     file upload từ client
-     * @param taskId   ID của task (dùng làm prefix trong S3 key)
-     * @return URL của file trên S3
+     * @param file     file uploaded from client
+     * @param taskId   ID of the task (used as a prefix in the S3 key)
+     * @return URL of the file on S3
      */
     String uploadTaskImage(MultipartFile file, Long taskId);
 
     /**
-     * Xóa file trên S3 theo URL.
+     * Delete file on S3 by URL.
      *
-     * @param imageUrl URL đầy đủ của file cần xóa
+     * @param imageUrl Full URL of the file to be deleted
      */
     void deleteFile(String imageUrl);
 }

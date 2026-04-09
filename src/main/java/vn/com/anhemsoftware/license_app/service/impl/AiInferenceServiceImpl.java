@@ -9,18 +9,18 @@ import org.springframework.stereotype.Service;
 import vn.com.anhemsoftware.license_app.service.AiInferenceService;
 
 /**
- * Implementation của {@link AiInferenceService} sử dụng Spring AI
+ * Implementation of {@link AiInferenceService} using Spring AI
  * {@link ChatClient}.
  *
  * <p>
  * Fluent API pipeline:
  * 
  * <pre>
- * chatClient.prompt()   → khởi tạo request builder
+ * chatClient.prompt()   → initialize request builder
  *   .user(message)       → set user message
- *   .advisors(...)       → gắn PromptChatMemoryAdvisor với conversationId của user
- *   .call()              → gửi tới model (blocking)
- *   .content()           → extract text content từ response
+ *   .advisors(...)       → attach PromptChatMemoryAdvisor with user conversationId
+ *   .call()              → send to model (blocking)
+ *   .content()           → extract text content from response
  * </pre>
  */
 @Slf4j
@@ -32,13 +32,13 @@ public class AiInferenceServiceImpl implements AiInferenceService {
         private final ChatMemory chatMemory;
 
         // -------------------------------------------------------------------------
-        // Stateless — không có chat memory (backward-compatible)
+        // Stateless — no chat memory (backward-compatible)
         // -------------------------------------------------------------------------
 
         /**
-         * Gửi user message, dùng default system prompt đã set trong
+         * Send user message using the default system prompt set in
          * {@code ChatClientConfig}.
-         * Không có chat memory — mỗi lần gọi là một cuộc hội thoại độc lập.
+         * No chat memory — each call is an independent conversation.
          */
         @Override
         public String ask(String userMessage) {
@@ -54,12 +54,12 @@ public class AiInferenceServiceImpl implements AiInferenceService {
         }
 
         // -------------------------------------------------------------------------
-        // Stateful — có chat memory (per-user, JDBC-backed)
+        // Stateful — with chat memory (per-user, JDBC-backed)
         // -------------------------------------------------------------------------
 
         /**
-         * Gửi user message kèm lịch sử hội thoại từ MySQL.
-         * {@code conversationId} dùng để phân biệt user — thường là
+         * Send user message with conversation history from MySQL.
+         * {@code conversationId} is used to distinguish users — typically
          * {@code "user-{userId}"}.
          */
         @Override

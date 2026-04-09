@@ -22,7 +22,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(htmlContent, true);
             javaMailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Gửi email thất bại", e);
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 }

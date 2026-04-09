@@ -22,15 +22,15 @@ public class GlobalExceptionHandler {
     private final int CLIENT_ERROR = HttpStatus.BAD_REQUEST.value();
 
     /**
-     * HIGH risk login — trả về 403 + verificationToken để Frontend redirect sang
-     * màn OTP.
+     * HIGH risk login — returns 403 + verificationToken for Frontend to redirect to
+     * OTP screen.
      */
     @ExceptionHandler(DeviceVerificationRequiredException.class)
     public ResponseEntity<Map<String, Object>> handleDeviceVerificationRequired(
             DeviceVerificationRequiredException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("code", "REQUIRE_VERIFICATION");
-        body.put("message", "Đăng nhập từ thiết bị lạ. Vui lòng xác thực qua mã OTP đã gửi đến email.");
+        body.put("message", "Login from an unknown device. Please verify using the OTP sent to your email.");
         body.put("verificationToken", ex.getVerificationToken());
         body.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TaskNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleTaskNotFoundException(TaskNotFoundException ex,
             HttpServletRequest request) {
-        String title = "Không tìm thấy công việc (Task)";
+        String title = "Task not found";
         String detail = ex.getMessage();
         String instanceId = request.getRequestURI();
 
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
-        String title = "Lỗi xác thực dữ liệu";
+        String title = "Data validation error";
         String details = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));

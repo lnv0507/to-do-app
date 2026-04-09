@@ -26,8 +26,8 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Tiêu đề Task không được trống")
-    @Size(min = 1, max = 255, message = "Tiêu đề phải từ 1 đến 255 ký tự")
+    @NotBlank(message = "Task title cannot be empty")
+    @Size(min = 1, max = 255, message = "Title must be between 1 and 255 characters")
     @Column(nullable = false, length = 255)
     private String title;
 
@@ -45,7 +45,7 @@ public class Task {
     @Column(length = 20)
     private Priority priority;
 
-    @Size(max = 255, message = "Specification không được vượt quá 255 ký tự")
+    @Size(max = 255, message = "Specification cannot exceed 255 characters")
     @Column(length = 255)
 
     private String specification;

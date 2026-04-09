@@ -4,21 +4,15 @@ import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public record SearchTaskRequest(
-        @JsonPropertyDescription("Từ khóa để tìm kiếm trong tiêu đề hoặc mô tả") 
-        String keyword,
-        
-        @JsonPropertyDescription("Lọc theo trạng thái hoàn thành: true hoặc false") 
-        Boolean completed,
-        
-        @JsonPropertyDescription("Lọc theo task yêu thích: true hoặc false") 
-        Boolean favorite,
-        
-        @JsonPropertyDescription("Lọc theo mức độ ưu tiên: LOW, MEDIUM, HIGH, CRITICAL") 
-        String priority,
-        
-        @JsonPropertyDescription("Lọc due date nhỏ hơn hoặc bằng (trước) ngày này, format yyyy-MM-dd") 
-        LocalDate dueDateBefore,
-        
-        @JsonPropertyDescription("Lọc due date lớn hơn hoặc bằng (sau) ngày này, format yyyy-MM-dd") 
-        LocalDate dueDateAfter
-) {}
+                @JsonPropertyDescription("Keyword to search in title or description") String keyword,
+
+                @JsonPropertyDescription("Filter by completion status: true or false") Boolean completed,
+
+                @JsonPropertyDescription("Filter by favorite task: true or false") Boolean favorite,
+
+                @JsonPropertyDescription("Filter by priority level: LOW, MEDIUM, HIGH, CRITICAL") String priority,
+
+                @JsonPropertyDescription("Filter due date less than or equal to (before) this date, format yyyy-MM-dd") LocalDate dueDateBefore,
+
+                @JsonPropertyDescription("Filter due date greater than or equal to (after) this date, format yyyy-MM-dd") LocalDate dueDateAfter) {
+}

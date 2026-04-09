@@ -62,15 +62,26 @@ public class AuthController {
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(Principal principal, @Valid @RequestBody ChangePasswordRequest request) throws Exception {
         if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Vui lòng đăng nhập.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please log in.");
         }
         authService.changePassword(principal.getName(), request);
-        return ResponseEntity.ok("✅ Mật khẩu thay đổi thành công. Bạn đã được đăng xuất an toàn khỏi các thiết bị khác.");
+        return ResponseEntity.ok("✅ Password changed successfully. You have been securely logged out from other devices.");
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) throws Exception {
         authService.resetPassword(request);
-        return ResponseEntity.ok("✅ Mật khẩu thiết lập lại thành công. Bạn đã được bảo mật an toàn trên tất cả các nền tảng.");
+        return ResponseEntity.ok("Password reset successfully.");
+    }
+
+    /**
+     * Clears the HttpOnly refreshToken cookie and revokes it from Redis.
+     * Must be callable even without a valid access token (Spring Security
+     * must permit this endpoint).
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        authService.logout(request, response);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -3,9 +3,9 @@ package vn.com.anhemsoftware.license_app.exception;
 import lombok.Getter;
 
 /**
- * Ném ra khi login từ thiết bị HIGH risk.
- * Chứa verificationToken để frontend redirect sang màn nhập OTP.
- * HTTP Status: 403 (xử lý trong GlobalExceptionHandler).
+ * Thrown when logging in from a HIGH risk device.
+ * Contains verificationToken for frontend to redirect to OTP input screen.
+ * HTTP Status: 403 (handled in GlobalExceptionHandler).
  */
 @Getter
 public class DeviceVerificationRequiredException extends RuntimeException {

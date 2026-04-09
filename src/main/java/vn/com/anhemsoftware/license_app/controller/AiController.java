@@ -14,26 +14,26 @@ import vn.com.anhemsoftware.license_app.payload.ai.AiPromptResponse;
 import vn.com.anhemsoftware.license_app.service.AiInferenceService;
 
 /**
- * REST API cho Spring AI inference.
+ * REST API for Spring AI inference.
  *
  * <p>Endpoints:
  * <ul>
- * <li>{@code POST /api/v1/ai/ask} — gửi prompt, nhận response từ model (yêu cầu
+ * <li>{@code POST /api/v1/ai/ask} — send prompt, receive response from model (requires
  * JWT)</li>
  * </ul>
  *
- * <p>Chat memory: mỗi user có một {@code conversationId} riêng ({@code
+ * <p>Chat memory: each user has a unique {@code conversationId} ({@code
  * "user-{id}"}).
- * ID này được lấy từ JWT token đã xác thực — client không thể giả mạo.
+ * This ID is retrieved from the authenticated JWT token — client cannot forge it.
  *
- * <p>Ví dụ request:
+ * <p>Example request:
  * <pre>{@code
  * POST /api/v1/ai/ask
  * Authorization: Bearer <token>
  * Content-Type: application/json
  *
  * {
- * "prompt": "Giải thích Spring AI trong 3 dòng"
+ * "prompt": "Explain Spring AI in 3 lines"
  * }
  * }</pre>
  */
@@ -45,19 +45,19 @@ public class AiController {
     private final AiInferenceService aiInferenceService;
 
     /**
-     * Gửi prompt tới model và trả về response, kèm lịch sử hội thoại của user.
+     * Send prompt to model and return response, including user's chat history.
      *
-     * @param request body chứa {@code prompt} (bắt buộc)
-     * @param auth    Spring Security Authentication — inject tự động, luôn có vì
-     *                endpoint yêu cầu JWT
-     * @return {@link AiPromptResponse} chứa nội dung phản hồi từ model
+     * @param request body containing {@code prompt} (mandatory)
+     * @param auth    Spring Security Authentication — automatically injected, always present since
+     *                endpoint requires JWT
+     * @return {@link AiPromptResponse} containing response content from the model
      */
     @PostMapping("/ask")
     public ResponseEntity<AiPromptResponse> ask(
             @Valid @RequestBody AiPromptRequest request,
             Authentication auth) {
 
-        // Lấy userId từ JWT token đã xác thực — không nhận từ client để chống giả mạo
+        // Get userId from authenticated JWT token — not received from client to prevent forgery
         User user = (User) auth.getPrincipal();
         String conversationId = "user-" + user.getId();
 

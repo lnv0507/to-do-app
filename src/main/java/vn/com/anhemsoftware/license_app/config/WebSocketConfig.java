@@ -12,20 +12,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Prefix cho message từ server gửi đến client
+        // Prefix for messages sent from server to client
         config.enableSimpleBroker("/topic");
-        // Prefix cho message từ client gửi đến server
+        // Prefix for messages sent from client to server
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Endpoint để client connect vào WebSocket
+        // Endpoint for clients to connect to WebSocket
         registry.addEndpoint("/api/v1/ws")
-                .setAllowedOriginPatterns("https://app.practicehandler.io.vn", "http://localhost:3000") // Cho phép CORS
-                                                                                                        // từ mọi nguồn
-                                                                                                        // (có thể
-                // điều chỉnh)
-                .withSockJS(); // Fallback cho browser không support WebSocket
+                .setAllowedOriginPatterns("https://app.practicehandler.io.vn", "http://localhost:3000") // Enable CORS
+                .withSockJS(); // Fallback for browsers not supporting WebSocket
     }
 }

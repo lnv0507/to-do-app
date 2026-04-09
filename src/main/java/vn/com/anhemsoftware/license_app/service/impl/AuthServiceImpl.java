@@ -62,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
     @Value("${app.frontend-url:http://localhost:3000}")
     private String FRONTEND_URL;
 
-    /** Pending HIGH-risk login chờ OTP — TTL 10 phút */
+    /** Pending HIGH-risk login waiting for OTP — TTL 10 minutes */
     @Value("${auth.redis.prefix.pending-login:PENDING_LOGIN:}")
     private String REDIS_PENDING_LOGIN;
 
@@ -102,7 +102,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // CONFIRM OTP (đăng ký)
+    // CONFIRM OTP (Registration)
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
@@ -125,7 +125,7 @@ public class AuthServiceImpl implements AuthService {
         userEntity.setPassword(passwordEncoder.encode(cacheData.signUpRequest().password()));
         User userDB = userRepository.save(userEntity);
 
-        // Thiết bị đầu tiên từ đăng ký → trusted ngay
+        // First device from registration -> instantly trusted
         UUID refreshTokenId = UUID.randomUUID();
         String accessToken = jwtService.generateToken(userDB.getEmail(), refreshTokenId);
         String refreshToken = jwtService.generateRefreshToken(userDB.getEmail(), refreshTokenId);
@@ -167,13 +167,13 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Password not match");
         }
 
-        // 2. RBA evaluation — HIGH risk sẽ throw exception trước khi cấp session
+        // 2. RBA evaluation — HIGH risk will throw exception before issuing a session
         RiskLevel risk = evaluateRisk(userDB, request);
         if (risk == RiskLevel.HIGH) {
             handleHighRisk(userDB, request); // throws DeviceVerificationRequiredException
         }
 
-        // 3. Tạo session (chỉ NONE / LOW / MEDIUM mới đến được đây)
+        // 3. Create session (only NONE / LOW / MEDIUM reach this point)
         UUID refreshTokenId = UUID.randomUUID();
         String accessToken = jwtService.generateToken(userDB.getEmail(), refreshTokenId);
         String refreshToken = jwtService.generateRefreshToken(userDB.getEmail(), refreshTokenId);
@@ -190,7 +190,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // VERIFY DEVICE — Phase 2: xác thực OTP sau HIGH risk block
+    // VERIFY DEVICE — Phase 2: OTP verification after HIGH risk block
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
@@ -201,12 +201,12 @@ public class AuthServiceImpl implements AuthService {
         String key = REDIS_PENDING_LOGIN + verifyDeviceRequest.verificationToken();
         PendingLoginCache pending = (PendingLoginCache) redisTemplate.opsForValue().get(key);
         if (pending == null) {
-            throw new Exception("Mã xác thực không tồn tại hoặc đã hết hạn (10 phút).");
+            throw new Exception("Verification code does not exist or has expired (10 minutes).");
         }
 
         // 2. Kiểm tra OTP
         if (!pending.otp().equals(verifyDeviceRequest.otp())) {
-            throw new IllegalArgumentException("OTP không đúng.");
+            throw new IllegalArgumentException("Incorrect OTP.");
         }
 
         // 3. Xoá key one-time
@@ -226,7 +226,7 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.opsForValue().set(REDIS_REFRESH + refreshTokenId, "ACTIVE", maxAgeSeconds, TimeUnit.SECONDS);
         saveUserSession(userDB.getId(), refreshTokenId.toString(), maxAgeSeconds, request);
 
-        // 6. Tạo UserDevice mới với isTrusted=true (đã xác thực OTP = tin cậy)
+        // 6. Create new UserDevice with isTrusted=true (OTP verified = trusted)
         String newDeviceId = UUID.randomUUID().toString();
         UserDevice newDevice = UserDevice.builder()
                 .user(userDB)
@@ -253,16 +253,16 @@ public class AuthServiceImpl implements AuthService {
             throws Exception {
         String oldRefreshToken = CookieUtil.read(request, "refreshToken");
         if (oldRefreshToken == null)
-            throw new Exception("Refresh token is missing");
+            throw new IllegalArgumentException("Refresh token is missing");
         if (!jwtService.isTokenValid(oldRefreshToken))
-            throw new Exception("Invalid or Expired Refresh Token");
+            throw new IllegalArgumentException("Invalid or Expired Refresh Token");
 
         String oldJti = jwtService.extractJti(oldRefreshToken);
         String email = jwtService.extractEmail(oldRefreshToken);
 
         String status = (String) redisTemplate.opsForValue().get(REDIS_REFRESH + oldJti);
         if (status == null)
-            throw new Exception("Refresh token has been revoked or reused");
+            throw new IllegalArgumentException("Refresh token has been revoked or reused");
 
         redisTemplate.delete(REDIS_REFRESH + oldJti);
         User userDB = userRepository.findByEmail(email).orElseThrow(() -> new Exception("User not found"));
@@ -297,6 +297,26 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = CookieUtil.read(request, "refreshToken");
+        if (refreshToken != null) {
+            try {
+                if (jwtService.isTokenValid(refreshToken)) {
+                    String jti = jwtService.extractJti(refreshToken);
+                    // Revoke from Redis — safe even if already revoked
+                    redisTemplate.delete(REDIS_REFRESH + jti);
+                }
+            } catch (Exception ignored) {
+                // Token already invalid — nothing to revoke, just clear the cookie
+            }
+        }
+        // Expire the HttpOnly refreshToken cookie immediately
+        ResponseCookie expired = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true).secure(false).sameSite("Lax").path("/").maxAge(0).build();
+        response.addHeader(HttpHeaders.SET_COOKIE, expired.toString());
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // CHANGE PASSWORD & RESET PASSWORD
     // ═══════════════════════════════════════════════════════════════════════════
@@ -307,17 +327,16 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new Exception("User not found"));
 
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Mật khẩu cũ không chính xác.");
+            throw new IllegalArgumentException("Incorrect old password.");
         }
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
 
-        // Lấy jti hiện tại từ context (có thể pass từ JWT lọc trên Authentication,
-        // nhưng ở đây ta có thể dùng ContextHolder.
-        // Tạm thời để đơn giản, gọi reset tất cả phiên ngoại trừ hiện tại (nếu có
-        // context jti).
-        // Nếu không có jti hiện tại, log out TẤT CẢ (Global Revoke).
+        // Retrieve current jti from context (can be passed from JWT filter on Authentication),
+        // but here we can use ContextHolder.
+        // For simplicity, reset all sessions except current (if context jti exists).
+        // If current jti is not available, logout ALL (Global Revoke).
         logoutAllExcept(user.getId(), "DUMMY_JTI_TO_LOGOUT_ALL");
 
         emailService.sendEmail(
@@ -330,7 +349,7 @@ public class AuthServiceImpl implements AuthService {
     public void resetPassword(ResetPasswordRequest request) throws Exception {
         String email = (String) redisTemplate.opsForValue().get(REDIS_RESET_PASSWORD + request.token());
         if (email == null) {
-            throw new Exception("Token đổi mật khẩu không hợp lệ hoặc đã hết hạn.");
+            throw new Exception("Password reset token is invalid or has expired.");
         }
 
         User user = userRepository.findByEmail(email)
@@ -359,20 +378,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * Tính risk level dựa trên Device cookie và GeoLocation (Vị trí).
-     * Ma trận rủi ro:
-     * - Cũ (Tin cậy) + Vị trí Quen: NONE / LOW
-     * - Cũ (Tin cậy) + Vị trí Mới (Impossible travel): CRITICAL (tương đương HIGH
-     * nhưng lý do khác)
-     * - Mới (Không cookie) + Vị trí Quen: MEDIUM (Mua máy mới, dùng 4G)
-     * - Mới (Không cookie) + Vị trí Khác: HIGH (Bị lộ pass, hacker ở xa)
+     * Calculate risk level based on Device cookie and GeoLocation (Location).
+     * Risk Matrix:
+     * - Old (Trusted) + Known Location: NONE / LOW
+     * - Old (Trusted) + New Location (Impossible travel): CRITICAL (equivalent to HIGH but different reason)
+     * - New (No cookie) + Known Location: MEDIUM (New machine, using same network/IP)
+     * - New (No cookie) + New Location: HIGH (Leaked password, hacker at far distance)
      */
     private RiskLevel evaluateRisk(User userDB, HttpServletRequest request) {
         String deviceIdCookie = CookieUtil.read(request, "device_id");
         String currentIp = RequestUtils.getClientIp(request);
         GeoLocation currentGeo = geoLocationService.getLocation(currentIp);
 
-        // ─── Case: có device cookie (Thiết bị cũ) ──────────────────────────────
+        // ─── Case: has device cookie (Old device) ──────────────────────────────
         if (deviceIdCookie != null) {
             UserDevice existing = userDeviceRepository
                     .findByUserIdAndDeviceId(userDB.getId(), deviceIdCookie)
@@ -394,8 +412,8 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        // ─── Case: không có cookie (Thiết bị mới) ─────────────────────────────
-        // So vị trí với một trong các thiết bị đã biết của user
+        // ─── Case: no device cookie (New device) ─────────────────────────────
+        // Compare location with one of the user's known devices
         boolean locationKnown = userDeviceRepository.findAllByUserId(userDB.getId())
                 .stream()
                 .anyMatch(d -> {
@@ -417,7 +435,7 @@ public class AuthServiceImpl implements AuthService {
         String currentUa = request.getHeader("User-Agent");
         long now = System.currentTimeMillis();
 
-        // NONE & LOW: trusted device đã có — update silent
+        // NONE & LOW: trusted device already exists — silent update
         if (risk == RiskLevel.NONE || risk == RiskLevel.LOW) {
             UserDevice existing = userDeviceRepository
                     .findByUserIdAndDeviceId(userDB.getId(), deviceIdCookie)
@@ -432,11 +450,10 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
 
-        // MEDIUM: device lạ + IP quen → tạo device mới isTrusted=true + warning email
-        // IP quen → khả năng cao là user thật (đổi thiết bị / reinstall OS).
-        // Tin tưởng ngay, nhưng vẫn cảnh báo để user biết.
-        // Nếu không phải họ, click link "Không phải tôi" → revoke session +
-        // isTrusted=false.
+        // MEDIUM: unknown device + known IP -> create new device isTrusted=true + warning email
+        // Known IP -> likely real user (switched device / reinstalled OS).
+        // Trust immediately, but still warn the user.
+        // If it's not them, click "This wasn't me" link -> revoke session + isTrusted=false.
         String newDeviceId = UUID.randomUUID().toString();
         UserDevice newDevice = UserDevice.builder()
                 .user(userDB)
@@ -466,9 +483,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * HIGH risk: không tạo session, sinh OTP + verificationToken, gửi email, throw
-     * exception.
-     * Frontend nhận 403 + verificationToken → redirect sang màn nhập OTP.
+     * HIGH risk: no session creation, generate OTP + verificationToken, send email, throw exception.
+     * Frontend receives 403 + verificationToken -> redirect to OTP input screen.
      */
     private void handleHighRisk(User userDB, HttpServletRequest request) {
         String currentIp = RequestUtils.getClientIp(request);
@@ -487,7 +503,7 @@ public class AuthServiceImpl implements AuthService {
                 "Sign-in attempt blocked — verify it's you",
                 EmailTemplateBuilder.highRiskOtp(currentUa, currentIp, geo, otp, PENDING_LOGIN_MINUTES));
 
-        // Throw → GlobalExceptionHandler trả 403 + verificationToken cho Frontend
+        // Throw -> GlobalExceptionHandler returns 403 + verificationToken for Frontend
         throw new DeviceVerificationRequiredException(verificationToken);
     }
 

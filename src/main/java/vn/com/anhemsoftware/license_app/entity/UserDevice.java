@@ -48,13 +48,13 @@ public class UserDevice {
     Long createdAt;
 
     /**
-     * JTI của refresh token phiên đăng nhập này — dùng để revoke khi user nhấn
-     * "Không phải tôi"
+     * JTI of this login session's refresh token — used to revoke when user clicks
+     * "This wasn't me"
      */
     @Column(name = "session_jti")
     String sessionJti;
 
-    /** User-Agent lần cuối — cập nhật silent khi device token khớp */
+    /** Last User-Agent — updated silently when device token matches */
     @Column(name = "user_agent", length = 512)
     String userAgent;
 }

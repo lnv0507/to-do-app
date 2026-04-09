@@ -54,7 +54,7 @@ public class S3ServiceImpl implements S3Service {
 
             s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
         } catch (IOException e) {
-            throw new RuntimeException("Không thể đọc dữ liệu file upload", e);
+            throw new RuntimeException("Unable to read uploaded file data", e);
         }
 
         return buildFileUrl(key);
@@ -68,7 +68,7 @@ public class S3ServiceImpl implements S3Service {
         // Extract key from URL: https://{bucket}.s3.{region}.amazonaws.com/{key}
         String prefix = "https://" + bucketName + ".s3." + region + ".amazonaws.com/";
         if (!imageUrl.startsWith(prefix)) {
-            throw new IllegalArgumentException("URL không thuộc bucket hiện tại: " + imageUrl);
+            throw new IllegalArgumentException("URL does not belong to the current bucket: " + imageUrl);
     }
         String key = imageUrl.substring(prefix.length());
 
@@ -85,15 +85,15 @@ public class S3ServiceImpl implements S3Service {
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File upload không được trống");
+            throw new IllegalArgumentException("Uploaded file cannot be empty");
         }
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
             throw new IllegalArgumentException(
-                    "Chỉ chấp nhận file ảnh (jpeg, png, gif, webp). Content-type nhận được: " + file.getContentType()
+                    "Only image files are accepted (jpeg, png, gif, webp). Received content-type: " + file.getContentType()
             );
         }
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Kích thước file không được vượt quá 5MB");
+            throw new IllegalArgumentException("File size cannot exceed 5MB");
         }
     }
 

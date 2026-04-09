@@ -19,20 +19,20 @@ public class TaskNotificationScheduler {
     private final SimpMessagingTemplate messagingTemplate;
 
     /**
-     * Kiểm tra task đến hạn mỗi 60 giây (1 phút)
-     * Có thể điều chỉnh cron expression theo nhu cầu
+     * Check for due tasks every 60 seconds (1 minute)
+     * Cron expression can be adjusted as needed
      */
-    @Scheduled(fixedRate = 60000) // 60000ms = 60s = 1 phút
+    @Scheduled(fixedRate = 60000) // 60000ms = 60s = 1 minute
     public void checkAndNotifyDueTasks() {
         try {
             List<Task> dueTasks = taskService.getDueTasks();
 
             if (!dueTasks.isEmpty()) {
-                // Gửi danh sách task đến tất cả client đang subscribe /topic/tasks/due
+                // Send task list to all clients subscribed to /topic/tasks/due
                 messagingTemplate.convertAndSend("/topic/tasks/due", dueTasks);
             }
         } catch (Exception e) {
-            log.error("Lỗi khi kiểm tra task đến hạn", e);
+            log.error("Error checking for due tasks", e);
         }
     }
 }

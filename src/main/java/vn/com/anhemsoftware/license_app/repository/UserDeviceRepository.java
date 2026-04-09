@@ -12,6 +12,6 @@ public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
 
     Optional<UserDevice> findByDeviceId(String deviceId);
 
-    /** Dùng để kiểm tra IP của user có quen không khi device cookie vắng mặt */
+    /** Used to check if user IP is known when device cookie is absent */
     java.util.List<UserDevice> findAllByUserId(Long userId);
 }

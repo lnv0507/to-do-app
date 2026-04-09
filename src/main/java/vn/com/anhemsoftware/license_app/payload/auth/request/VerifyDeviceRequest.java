@@ -4,10 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Body gửi lên khi user nhập OTP xác thực thiết bị (Scenario HIGH).
+ * Body sent when user enters OTP for device verification (Scenario HIGH).
  *
- * @param verificationToken UUID ngắn hạn từ response 403 của signIn
- * @param otp               6 chữ số gửi qua email
+ * @param verificationToken Short-lived UUID from signIn 403 response
+ * @param otp               6-digit code sent via email
  */
 public record VerifyDeviceRequest(
         @NotBlank String verificationToken,

@@ -7,24 +7,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public record CreateTaskRequest(
         @JsonProperty(required = true) 
-        @JsonPropertyDescription("Tiêu đề của task, bắt buộc phải có") 
+        @JsonPropertyDescription("Task title, mandatory") 
         String title,
         
-        @JsonPropertyDescription("Mô tả chi tiết cho task") 
+        @JsonPropertyDescription("Detailed description for the task") 
         String description,
         
-        @JsonPropertyDescription("Trạng thái hoàn thành: true nếu đã xong, false nếu chưa") 
+        @JsonPropertyDescription("Completion status: true if finished, false if not") 
         boolean completed,
         
-        @JsonPropertyDescription("Mức độ ưu tiên. CHÚ Ý PHẢI LÀ MỘT TRONG CÁC GIÁ TRỊ SAU: LOW, MEDIUM, HIGH, CRITICAL") 
+        @JsonPropertyDescription("Priority level. MUST BE ONE OF THE FOLLOWING VALUES: LOW, MEDIUM, HIGH, CRITICAL") 
         Priority priority,
         
-        @JsonPropertyDescription("Đặc tả chi tiết của task") 
+        @JsonPropertyDescription("Detailed specification of the task") 
         String specification,
         
-        @JsonPropertyDescription("Ngày hết hạn của task, format mặc định yyyy-MM-dd") 
+        @JsonPropertyDescription("Task due date, default format yyyy-MM-dd") 
         LocalDate dueDate,
         
-        @JsonPropertyDescription("Đường dẫn hình ảnh của task") 
+        @JsonPropertyDescription("Image URL of the task") 
         String imageUrl
 ) {}

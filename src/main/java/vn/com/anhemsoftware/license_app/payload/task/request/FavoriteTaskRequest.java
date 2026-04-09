@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 public class FavoriteTaskRequest {
 
-    @NotNull(message = "isFavorite không được null")
+    @NotNull(message = "isFavorite must not be null")
     private Boolean isFavorite;
 }

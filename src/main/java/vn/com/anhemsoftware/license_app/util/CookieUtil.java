@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class CookieUtil {
 
     /**
-     * Đọc giá trị từ Cookie theo tên
+     * Read cookie value by name
      */
     public static String read(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();

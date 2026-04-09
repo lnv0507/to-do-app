@@ -6,19 +6,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public record UpdateTaskRequest(
-                @JsonProperty(required = true) @JsonPropertyDescription("ID của task cần update") Long id,
+                @JsonProperty(required = true) @JsonPropertyDescription("ID of the task to update") Long id,
 
-                @JsonPropertyDescription("Tiêu đề mới của task") String title,
+                @JsonPropertyDescription("New title for the task") String title,
 
-                @JsonPropertyDescription("Mô tả chi tiết cho task") String description,
+                @JsonPropertyDescription("Detailed description for the task") String description,
 
-                @JsonPropertyDescription("Trạng thái hoàn thành: true nếu đã xong, false nếu chưa") boolean completed,
+                @JsonPropertyDescription("Completion status: true if finished, false if not") boolean completed,
 
-                @JsonPropertyDescription("Mức độ ưu tiên. CHÚ Ý PHẢI LÀ MỘT TRONG CÁC GIÁ TRỊ SAU: LOW, MEDIUM, HIGH, CRITICAL") Priority priority,
+                @JsonPropertyDescription("Priority level. MUST BE ONE OF THE FOLLOWING VALUES: LOW, MEDIUM, HIGH, CRITICAL") Priority priority,
 
-                @JsonPropertyDescription("Đặc tả chi tiết của task") String specification,
+                @JsonPropertyDescription("Detailed specification of the task") String specification,
 
-                @JsonPropertyDescription("Ngày hết hạn của task, format mặc định yyyy-MM-dd") LocalDate dueDate,
+                @JsonPropertyDescription("Task due date, default format yyyy-MM-dd") LocalDate dueDate,
 
-                @JsonPropertyDescription("Đường dẫn hình ảnh của task") String imageUrl) {
+                @JsonPropertyDescription("Image URL of the task") String imageUrl) {
 }

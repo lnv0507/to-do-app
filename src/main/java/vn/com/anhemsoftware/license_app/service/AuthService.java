@@ -30,10 +30,16 @@ public interface AuthService {
         void resetPassword(ResetPasswordRequest request) throws Exception;
 
         /**
-         * Scenario HIGH: Xác thực OTP sau khi bị block.
-         * Tạo session + UserDevice + cấp token nếu OTP đúng.
+         * Scenario HIGH: Verify OTP after being blocked.
+         * Create session + UserDevice + issue tokens if OTP is correct.
          */
         ResponseEntity<SignUpResponse> verifyDevice(HttpServletRequest request,
                         HttpServletResponse response,
                         VerifyDeviceRequest verifyDeviceRequest) throws Exception;
+
+        /**
+         * Clears the HttpOnly refreshToken cookie and revokes its Redis entry.
+         * Safe to call even if the token is already expired/revoked.
+         */
+        void logout(HttpServletRequest request, HttpServletResponse response);
 }

@@ -4,9 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request body cho AI prompt endpoint.
+ * Request body for AI prompt endpoint.
  */
 public record AiPromptRequest(
 
-                @NotBlank(message = "Prompt không được để trống") @Size(max = 4000, message = "Prompt không được vượt quá 4000 ký tự") String prompt) {
+                @NotBlank(message = "Prompt cannot be empty") @Size(max = 4000, message = "Prompt cannot exceed 4000 characters") String prompt) {
 }

@@ -35,7 +35,7 @@ public class TaskController {
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+            throw new IllegalArgumentException("Task ID must not be null or <= 0");
         }
         return ResponseEntity.ok(taskService.getTaskById(id));
     }
@@ -43,10 +43,10 @@ public class TaskController {
     @PostMapping
     public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
         if (task == null) {
-            throw new IllegalArgumentException("Task không được null");
+            throw new IllegalArgumentException("Task must not be null");
         }
         if (task.getTitle() == null || task.getTitle().trim().isEmpty()) {
-            throw new IllegalArgumentException("Tiêu đề Task không được trống");
+            throw new IllegalArgumentException("Task title cannot be empty");
         }
         Task createdTask = taskService.createTask(task);
         return new ResponseEntity<>(createdTask, HttpStatus.CREATED);
@@ -55,13 +55,13 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id, @Valid @RequestBody Task taskDetails) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+            throw new IllegalArgumentException("Task ID must not be null or <= 0");
         }
         if (taskDetails == null) {
-            throw new IllegalArgumentException("Task details không được null");
+            throw new IllegalArgumentException("Task details must not be null");
         }
         if (taskDetails.getTitle() != null && taskDetails.getTitle().trim().isEmpty()) {
-            throw new IllegalArgumentException("Tiêu đề Task không được trống");
+            throw new IllegalArgumentException("Task title cannot be empty");
         }
         return ResponseEntity.ok(taskService.updateTask(id, taskDetails));
     }
@@ -69,7 +69,7 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+            throw new IllegalArgumentException("Task ID must not be null or <= 0");
         }
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
@@ -98,7 +98,7 @@ public class TaskController {
             @PathVariable Long id,
             @Valid @RequestBody FavoriteTaskRequest request) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+            throw new IllegalArgumentException("Task ID must not be null or <= 0");
         }
 
         Task updatedTask = taskService.setFavorite(id, request.getIsFavorite());
@@ -107,7 +107,7 @@ public class TaskController {
     }
 
     /**
-     * Upload ảnh cho Task lên AWS S3.
+     * Upload image for Task to AWS S3.
      * POST /api/tasks/{id}/image
      * Form-data key: "file"
      */
@@ -116,7 +116,7 @@ public class TaskController {
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+            throw new IllegalArgumentException("Task ID must not be null or <= 0");
         }
         // Verify task exists before uploading
         Task task = taskService.getTaskById(id);
@@ -134,13 +134,13 @@ public class TaskController {
     }
 
     /**
-     * Xóa ảnh của Task trên AWS S3.
+     * Delete task image from AWS S3.
      * DELETE /api/tasks/{id}/image
      */
     @DeleteMapping("/{id}/image")
     public ResponseEntity<Void> deleteTaskImage(@PathVariable Long id) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Task ID không được null hoặc <= 0");
+            throw new IllegalArgumentException("Task ID must not be null or <= 0");
         }
         Task task = taskService.getTaskById(id);
         if (task.getImageUrl() != null) {

@@ -16,20 +16,20 @@ import org.springframework.context.annotation.Configuration;
  * (HTTP)        (Adapter)           (Fluent API)    (Business logic)
  * </pre>
  *
- * Tách cấu hình thấp nhất ra đây để dễ swap model hoặc thêm custom headers /
- * proxy sau này.
+ * Extract lowest-level configuration here to easily swap models or add custom headers / 
+ * proxy later.
  */
 @Configuration
 public class OpenAiConfig {
 
-    /** API key lấy từ environment variable OPENAI_API_KEY */
+    /** API key retrieved from environment variable OPENAI_API_KEY */
     @Value("${spring.ai.openai.api-key}")
     private String apiKey;
 
     /**
-     * Tên model đọc từ property {@code spring.ai.openai.model}.
-     * Default {@code gpt-4o-mini} được khai báo trong application.properties.
-     * Override bằng env var {@code OPENAI_MODEL} khi cần thay model.
+     * Model name read from property {@code spring.ai.openai.model}.
+     * Default {@code gpt-4o-mini} is declared in application.properties.
+     * Override using env var {@code OPENAI_MODEL} when model change is needed.
      */
     @Value("${spring.ai.openai.model:gpt-4o-mini}")
     private String model;
@@ -41,8 +41,8 @@ public class OpenAiConfig {
     private Integer maxTokens;
 
     /**
-     * Low-level HTTP client – chịu trách nhiệm gửi/nhận HTTP tới OpenAI REST API.
-     * Inject bean này nếu bạn cần custom headers, retry policy hoặc dùng proxy.
+     * Low-level HTTP client – responsible for sending/receiving HTTP to OpenAI REST API.
+     * Inject this bean if you need custom headers, retry policy, or a proxy.
      */
     @Bean
     public OpenAiApi openAiApi() {
@@ -52,9 +52,9 @@ public class OpenAiConfig {
     }
 
     /**
-     * Adapter layer – chuyển đổi {@link org.springframework.ai.chat.prompt.Prompt}
-     * của Spring AI thành format mà OpenAI REST API yêu cầu.
-     * Đây là nơi bạn chọn "não bộ" (model name) và các hyperparameter.
+     * Adapter layer – converts {@link org.springframework.ai.chat.prompt.Prompt}
+     * from Spring AI to the format required by OpenAI REST API.
+     * This is where you select the "brain" (model name) and hyperparameters.
      */
     @Bean
     public OpenAiChatModel openAiChatModel(OpenAiApi openAiApi) {

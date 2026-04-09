@@ -49,17 +49,17 @@ public class GeoLocationServiceImpl implements GeoLocationService {
         } catch (Exception e) {
             log.warn("Failed to get geolocation for IP {}: {}", ip, e.getMessage());
         }
-        
+
         // Fallback if API fails
         return new GeoLocation("Unknown", "Unknown", false);
     }
 
     private boolean isLocalOrPrivateIp(String ip) {
-        return ip.equals("127.0.0.1") || 
-               ip.equals("0:0:0:0:0:0:0:1") || 
-               ip.startsWith("192.168.") || 
-               ip.startsWith("10.") || 
-               (ip.startsWith("172.") && isPrivate172(ip));
+        return ip.equals("127.0.0.1") ||
+                ip.equals("0:0:0:0:0:0:0:1") ||
+                ip.startsWith("192.168.") ||
+                ip.startsWith("10.") ||
+                (ip.startsWith("172.") && isPrivate172(ip));
     }
 
     private boolean isPrivate172(String ip) {

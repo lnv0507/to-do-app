@@ -32,6 +32,7 @@ import vn.com.anhemsoftware.license_app.payload.auth.internal.GeoLocation;
 import vn.com.anhemsoftware.license_app.service.GeoLocationService;
 import vn.com.anhemsoftware.license_app.util.CookieUtil;
 import vn.com.anhemsoftware.license_app.util.OTPGenerator;
+import vn.com.anhemsoftware.license_app.util.EmailTemplateBuilder;
 import vn.com.anhemsoftware.license_app.util.RequestUtils;
 
 import java.util.Map;
@@ -53,6 +54,13 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${auth.redis.prefix.reset-password:RESET_PASS:}")
     private String REDIS_RESET_PASSWORD;
+
+    /**
+     * Frontend base URL — set APP_FRONTEND_URL env var on deploy, e.g.
+     * https://app.example.com
+     */
+    @Value("${app.frontend-url:http://localhost:3000}")
+    private String FRONTEND_URL;
 
     /** Pending HIGH-risk login chờ OTP — TTL 10 phút */
     @Value("${auth.redis.prefix.pending-login:PENDING_LOGIN:}")
@@ -305,12 +313,17 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
 
-        // Lấy jti hiện tại từ context (có thể pass từ JWT lọc trên Authentication, nhưng ở đây ta có thể dùng ContextHolder.
-        // Tạm thời để đơn giản, gọi reset tất cả phiên ngoại trừ hiện tại (nếu có context jti).
+        // Lấy jti hiện tại từ context (có thể pass từ JWT lọc trên Authentication,
+        // nhưng ở đây ta có thể dùng ContextHolder.
+        // Tạm thời để đơn giản, gọi reset tất cả phiên ngoại trừ hiện tại (nếu có
+        // context jti).
         // Nếu không có jti hiện tại, log out TẤT CẢ (Global Revoke).
         logoutAllExcept(user.getId(), "DUMMY_JTI_TO_LOGOUT_ALL");
 
-        emailService.sendEmail(user.getEmail(), "Mật khẩu Cập nhật Thành công", "Mật khẩu của bạn vừa được thay đổi. Nếu không phải bạn, hãy liên hệ hỗ trợ ngay.");
+        emailService.sendEmail(
+                user.getEmail(),
+                "Your Anhem password was changed",
+                EmailTemplateBuilder.passwordChangedNotification());
     }
 
     @Override
@@ -331,7 +344,10 @@ public class AuthServiceImpl implements AuthService {
         // Global Revoke tất cả thiết bị
         logoutAllExcept(user.getId(), "DUMMY_JTI_TO_LOGOUT_ALL");
 
-        emailService.sendEmail(user.getEmail(), "Mật khẩu Cập nhật Thành công", "Mật khẩu của bạn đã được đặt lại thành công sau khi báo cáo rủi ro.");
+        emailService.sendEmail(
+                user.getEmail(),
+                "Your Anhem password was reset",
+                EmailTemplateBuilder.passwordChangedNotification());
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -346,7 +362,8 @@ public class AuthServiceImpl implements AuthService {
      * Tính risk level dựa trên Device cookie và GeoLocation (Vị trí).
      * Ma trận rủi ro:
      * - Cũ (Tin cậy) + Vị trí Quen: NONE / LOW
-     * - Cũ (Tin cậy) + Vị trí Mới (Impossible travel): CRITICAL (tương đương HIGH nhưng lý do khác)
+     * - Cũ (Tin cậy) + Vị trí Mới (Impossible travel): CRITICAL (tương đương HIGH
+     * nhưng lý do khác)
      * - Mới (Không cookie) + Vị trí Quen: MEDIUM (Mua máy mới, dùng 4G)
      * - Mới (Không cookie) + Vị trí Khác: HIGH (Bị lộ pass, hacker ở xa)
      */
@@ -367,9 +384,10 @@ public class AuthServiceImpl implements AuthService {
 
                 if (Boolean.TRUE.equals(existing.getIsTrusted())) {
                     // Cũ + Quen
-                    if (isSameLocation) return RiskLevel.NONE;
+                    if (isSameLocation)
+                        return RiskLevel.NONE;
                     // Cũ + Lạ = CRITICAL (Impossible travel có thể xảy ra)
-                    return RiskLevel.HIGH; 
+                    return RiskLevel.HIGH;
                 }
                 // isTrusted=false → Cookie bị report xấu
                 return isSameLocation ? RiskLevel.MEDIUM : RiskLevel.HIGH;
@@ -438,24 +456,13 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.opsForValue().set(
                 REDIS_RESET_PASSWORD + resetToken, userDB.getEmail(), 2, TimeUnit.HOURS);
 
-        String resetLink = "http://localhost:3000/reset-password?token=" + resetToken;
-        String emailBody = """
-                Hệ thống phát hiện đăng nhập từ thiết bị mới.
-
-                🖥  Thiết bị : %s
-                🌐  Địa chỉ IP: %s
-
-                Nếu ĐÂY LÀ BẠN, hãy phớt lờ email này.
-                Nếu ĐÂY KHÔNG PHẢI LÀ BẠN, vui lòng BẤM VÀO ĐÂY ĐỂ ĐỔI MẬT KHẨU ngay lập tức. Sau khi đổi mật khẩu, hệ thống sẽ đăng xuất tài khoản của bạn khỏi tất cả các thiết bị.
-                👉 %s
-
-                Link có hiệu lực trong 2 giờ.
-                """.formatted(currentUa, currentIp, resetLink);
+        String resetLink = FRONTEND_URL + "/reset-password?token=" + resetToken;
+        GeoLocation geo = geoLocationService.getLocation(currentIp);
 
         emailService.sendEmail(
                 userDB.getEmail(),
-                "Cảnh báo bảo mật: Thay đổi mật khẩu ngay nếu đây không phải bạn",
-                emailBody);
+                "New sign-in detected on your Anhem account",
+                EmailTemplateBuilder.newDeviceWarning(currentUa, currentIp, geo, resetLink));
     }
 
     /**
@@ -473,25 +480,12 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.opsForValue().set(
                 REDIS_PENDING_LOGIN + verificationToken, pending, PENDING_LOGIN_MINUTES, TimeUnit.MINUTES);
 
-        String emailBody = """
-                Có người đang cố đăng nhập vào tài khoản của bạn từ một thiết bị và IP hoàn toàn mới.
-
-                🖥  Thiết bị : %s
-                🌐  Địa chỉ IP: %s
-                ⚠️  Mức rủi ro: HIGH
-
-                Nếu ĐÂY LÀ BẠN, hãy nhập mã OTP sau vào ứng dụng:
-
-                🔐  Mã OTP: %s
-
-                Mã có hiệu lực trong 10 phút.
-                Nếu không phải bạn, hãy bỏ qua email này. Hệ thống đã chặn đăng nhập này.
-                """.formatted(currentUa, currentIp, otp);
+        GeoLocation geo = geoLocationService.getLocation(currentIp);
 
         emailService.sendEmail(
                 userDB.getEmail(),
-                "🔐 Xác thực đăng nhập mới — Mã OTP của bạn",
-                emailBody);
+                "Sign-in attempt blocked — verify it's you",
+                EmailTemplateBuilder.highRiskOtp(currentUa, currentIp, geo, otp, PENDING_LOGIN_MINUTES));
 
         // Throw → GlobalExceptionHandler trả 403 + verificationToken cho Frontend
         throw new DeviceVerificationRequiredException(verificationToken);

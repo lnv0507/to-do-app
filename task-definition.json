@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:46",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:48",
     "containerDefinitions": [
         {
             "name": "redis-server",
@@ -104,7 +104,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:58bc190f48b95ed5eafe808910fad359dc17417c",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:7bf449dc77ed84a6c3aa2c7c64c006fa2805dfac",
             "cpu": 1024,
             "memory": 1024,
             "portMappings": [
@@ -119,19 +119,19 @@
             "environment": [
                 {
                     "name": "SPRING_MAIL_USERNAME",
-                    "value": "ta84578@gmail.com"
+                    "value": "bidang.tuyloan@gmail.com"
                 },
                 {
                     "name": "SPRING_DATASOURCE_URL",
                     "value": "jdbc:mysql://lisence-app-database.cfk8ig6c8kou.ap-southeast-1.rds.amazonaws.com:3306/anhemsoftware_license_app?createDatabaseIfNotExist=true"
                 },
                 {
-                    "name": "SPRING_MAIL_HOST",
-                    "value": "smtp.gmail.com"
-                },
-                {
                     "name": "APP_FRONTEND_URL",
                     "value": "https://app.practicehandler.io.vn"
+                },
+                {
+                    "name": "SPRING_MAIL_HOST",
+                    "value": "smtp.gmail.com"
                 },
                 {
                     "name": "SPRING_PROFILES_ACTIVE",
@@ -208,7 +208,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 46,
+    "revision": 48,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -249,8 +249,8 @@
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "FARGATE",
-        "MANAGED_INSTANCES"
+        "MANAGED_INSTANCES",
+        "FARGATE"
     ],
     "requiresCompatibilities": [
         "FARGATE"
@@ -261,7 +261,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-04-09T06:44:57.956Z",
+    "registeredAt": "2026-04-09T06:54:23.516Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }

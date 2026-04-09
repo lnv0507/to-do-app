@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:37",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-1:294500578387:task-definition/license-app-task:46",
     "containerDefinitions": [
         {
             "name": "redis-server",
@@ -104,7 +104,7 @@
         },
         {
             "name": "license-app",
-            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:afd17cc77ca682c7848b81988476dd10c2ae48b1",
+            "image": "294500578387.dkr.ecr.ap-southeast-1.amazonaws.com/ojt/anhemsoftware:58bc190f48b95ed5eafe808910fad359dc17417c",
             "cpu": 1024,
             "memory": 1024,
             "portMappings": [
@@ -128,6 +128,10 @@
                 {
                     "name": "SPRING_MAIL_HOST",
                     "value": "smtp.gmail.com"
+                },
+                {
+                    "name": "APP_FRONTEND_URL",
+                    "value": "https://app.practicehandler.io.vn"
                 },
                 {
                     "name": "SPRING_PROFILES_ACTIVE",
@@ -204,7 +208,7 @@
     "family": "license-app-task",
     "executionRoleArn": "arn:aws:iam::294500578387:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 37,
+    "revision": 46,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -245,8 +249,8 @@
     "placementConstraints": [],
     "compatibilities": [
         "EC2",
-        "MANAGED_INSTANCES",
-        "FARGATE"
+        "FARGATE",
+        "MANAGED_INSTANCES"
     ],
     "requiresCompatibilities": [
         "FARGATE"
@@ -257,7 +261,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2026-04-06T11:41:54.944Z",
+    "registeredAt": "2026-04-09T06:44:57.956Z",
     "registeredBy": "arn:aws:iam::294500578387:user/tuandc10",
     "tags": []
 }
